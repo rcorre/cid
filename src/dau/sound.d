@@ -3,7 +3,6 @@ module dau.sound;
 import std.string, std.conv, std.file, std.path, std.typecons;
 import dau.allegro;
 import dau.setup;
-import dau.preferences;
 
 private enum {
   fileFormat = Paths.soundDir ~ "/%s.ogg", // TODO: support other extensions
@@ -30,8 +29,7 @@ class SoundSample : AudioSample {
   }
 
   override void play() {
-    float gain = _gain * Preferences.fetch().soundVolume;
-    bool ok = al_play_sample(_sample, gain, _pan, _speed, _loop, &_id);
+    bool ok = al_play_sample(_sample, _gain, _pan, _speed, _loop, &_id);
     assert(ok, "a sound sample failed to play");
   }
 

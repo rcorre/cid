@@ -2,7 +2,6 @@ module dau.music;
 
 import std.path, std.string;
 import dau.setup;
-import dau.preferences;
 import dau.allegro;
 
 private enum {
@@ -11,7 +10,7 @@ private enum {
   sampleCount = 2048
 }
 
-void playMusicTrack(string name, bool loop = false) {
+void playMusicTrack(string name, bool loop = false, float volume = 1f) {
   stopCurrentMusicTrack();
   auto path = trackFormat.format(name);
   auto mixer = al_get_default_mixer();
@@ -20,7 +19,7 @@ void playMusicTrack(string name, bool loop = false) {
   assert(_stream !is null, "failed to load audio stream from " ~ path);
   assert(mixer !is null, "failed to get default mixer");
 
-  setMusicVolume(Preferences.fetch.musicVolume);
+  setMusicVolume(volume);
 
   if (loop) {
     bool ok = al_set_audio_stream_playmode(_stream, ALLEGRO_PLAYMODE.ALLEGRO_PLAYMODE_LOOP);

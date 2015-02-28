@@ -10,7 +10,6 @@ public import dau.state;
 public import dau.system;
 public import dau.sound;
 public import dau.music;
-public import dau.preferences;
 public import dau.geometry.all;
 public import dau.graphics.all;
 public import dau.util.all;
