@@ -1,4 +1,4 @@
-module dau.util.removal_list;
+module dau.util.droplist;
 
 import std.container;
 import std.algorithm;
@@ -6,7 +6,7 @@ import std.range;
 import std.container;
 
 /// list that automatically and efficiently removes entries for which cond(entry) is true
-class RemovalList(T, alias cond) if (is(typeof(cond(T.init)) == bool)) {
+class DropList(T, alias cond) if (is(typeof(cond(T.init)) == bool)) {
   void insert(T val) {
     head = new Node(val, head);
     if (head.next !is null) {
@@ -85,7 +85,7 @@ unittest {
     int val;
   }
 
-  auto list = new RemovalList!(Foo, x => !x.active);
+  auto list = new DropList!(Foo, x => !x.active);
 
   list.insert(new Foo(1, false));
   list.insert(new Foo(2, true));
