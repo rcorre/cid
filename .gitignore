@@ -1,0 +1,13 @@
+# dub files
+.dub
+dub.selections.json
+__test__library__
+
+# library files
+*.a
+*.dll
+*.lib
+
+# generated documentation
+docs.json
+__dummy.html
