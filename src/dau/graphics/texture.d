@@ -1,9 +1,9 @@
 module dau.graphics.texture;
 
 import std.string, std.conv, std.algorithm, std.file, std.path;
+import jsonizer;
 import dau.allegro;
 import dau.setup;
-import dau.util.jsonizer;
 import dau.geometry.all;
 import dau.graphics.color;
 

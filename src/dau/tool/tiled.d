@@ -4,9 +4,9 @@ import std.conv;
 import std.range;
 import std.file;
 import std.algorithm;
+import jsonizer;
 import dau.engine;
 import dau.graphics.all;
-import dau.util.jsonizer;
 
 auto loadTiledMap(string path) {
   assert(path.exists, "no map file found at " ~ path);
