@@ -10,7 +10,7 @@ private enum MouseButton {
   rmb = 2
 }
 
-private enum Keymap {
+private enum Keymap : uint[] {
   left  = [ALLEGRO_KEY_A],
   right = [ALLEGRO_KEY_D],
   up    = [ALLEGRO_KEY_W],
@@ -80,11 +80,11 @@ class InputManager {
 
   private:
   bool keyHeld(Keymap buttons) {
-    return buttons.any!(key => al_key_down(&_curKeyboardState, key));
+    return (cast(uint[]) buttons).any!(key => al_key_down(&_curKeyboardState, key));
   }
 
   bool keyPressed(Keymap buttons) {
-    return buttons.any!(key => !al_key_down(&_prevKeyboardState, key) && al_key_down(&_curKeyboardState, key));
+    return (cast(uint[]) buttons).any!(key => !al_key_down(&_prevKeyboardState, key) && al_key_down(&_curKeyboardState, key));
   }
 
   bool keyReleased(int keycode) {
