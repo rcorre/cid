@@ -17,16 +17,16 @@ void registerEventHandler(AllegroEventHandler handler, ALLEGRO_EVENT_TYPE type) 
 }
 
 /// pass FirstSceneType to instantiate first scene after allegro setup
-int runGame(FirstSceneType)(string iconPath = null) {
+int runGame(FirstSceneType)(GameSettings settings) {
   return al_run_allegro({
-    // initialize
     al_init();
+    _settings = settings;
 
     al_set_new_display_option(ALLEGRO_DISPLAY_OPTIONS.ALLEGRO_VSYNC, 1, ALLEGRO_SUGGEST);
-    mainDisplay = al_create_display(prefs.screenSizeX, prefs.screenSizeY);
+    mainDisplay = al_create_display(settings.screenWidth, settings.screenHeight);
     setDisplayTransform(al_get_display_width(mainDisplay), al_get_display_height(mainDisplay));
     mainEventQueue = al_create_event_queue();
-    mainTimer = al_create_timer(1.0 / Settings.fps);
+    mainTimer = al_create_timer(1.0 / settings.fps);
 
     al_install_keyboard();
     al_install_mouse();
@@ -37,7 +37,7 @@ int runGame(FirstSceneType)(string iconPath = null) {
     al_init_font_addon();
     al_init_ttf_addon();
 
-    al_reserve_samples(Settings.numAudioSamples);
+    al_reserve_samples(settings.numAudioSamples);
 
     al_register_event_source(mainEventQueue, al_get_display_event_source(mainDisplay));
     al_register_event_source(mainEventQueue, al_get_keyboard_event_source());
@@ -51,8 +51,8 @@ int runGame(FirstSceneType)(string iconPath = null) {
           ALLEGRO_INVERSE_ALPHA);
     }
 
-    if (iconPath !is null) {
-      _icon = al_load_bitmap(iconPath.toStringz);
+    if (settings.iconPath !is null) {
+      _icon = al_load_bitmap(settings.iconPath.toStringz);
       al_set_display_icon(mainDisplay, _icon);
       onShutdown({ al_destroy_bitmap(_icon); });
     }
@@ -60,7 +60,7 @@ int runGame(FirstSceneType)(string iconPath = null) {
     runSetupFunctions();
 
     al_start_timer(mainTimer); // start fps timer
-    setScene(new FirstSceneType);
+    setScene(new FirstSceneType(settings));
 
     while(_run) {
       bool frameTick = processEvents();
@@ -153,8 +153,8 @@ auto findMaxDisplayMode() {
 }
 
 void setDisplayTransform(int width, int height) {
-  float sx = cast(float) width / Settings.screenW;
-  float sy = cast(float) height / Settings.screenH;
+  float sx = cast(float) width / _settings.screenWidth;
+  float sy = cast(float) height / _settings.screenHeight;
   float scale = min(sx, sy);
   ALLEGRO_TRANSFORM trans;
   al_identity_transform(&trans);
@@ -165,3 +165,4 @@ void setDisplayTransform(int width, int height) {
 private:
 AllegroEventHandler[][ALLEGRO_EVENT_TYPE] _eventHandlers;
 ALLEGRO_BITMAP* _icon;
+GameSettings _settings;

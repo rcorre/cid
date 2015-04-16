@@ -23,12 +23,12 @@ void setScene(T)(Scene!T newScene) {
 @property auto currentScene() { return _currentScene; }
 
 class Scene(T) : IScene {
-  this(System!(T)[] systems, Sprite[string] cursorSpriteMap, Color bgColor = Color.black) {
+  this(System!(T)[] systems, Sprite[string] cursorSpriteMap, GameSettings settings, Color bgColor = Color.black) {
     _inputManager  = new InputManager;
     _entityManager = new EntityManager;
     _spriteBatch   = new SpriteBatch;
     _guiManager    = new GUIManager;
-    _camera        = new Camera(Settings.screenW, Settings.screenH);
+    _camera        = new Camera(settings.screenWidth, settings.screenHeight);
     _systems       = systems;
     _stateMachine  = new StateMachine!T(cast(T) this);
     _cursorManager = new CursorManager(cursorSpriteMap);

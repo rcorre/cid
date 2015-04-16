@@ -3,12 +3,13 @@ module dau.setup;
 alias InitFunction = void function();
 alias ShutdownFunction = void function();
 
-/// global settings
-enum Settings {
-  fps     = 60,   /// frames-per-second of update/draw loop
-  screenW = 800,  /// screen width
-  screenH = 600,  /// screen height
-  numAudioSamples = 4,  /// number of audio samples to reserve
+/// Settings used to configure the game.
+struct GameSettings {
+  int fps;             /// Frames-per-second of update/draw loop
+  int screenWidth;     /// Horizontal window size in pixels
+  int screenHeight;    /// Vertical window size in pixels
+  int numAudioSamples; /// Number of audio samples that can play at once
+  string iconPath;     /// Path to icon to use for app
 }
 
 /// paths to configuration files and content
