@@ -6,7 +6,7 @@
   "authors": ["rcorre"],
   "targetType": "library",
   "dependencies": {
-    "allegro": "==2.0.2+5.0.10",
+    "allegro": "~master",
     "jsonizer": ">=0.3.3"
   },
   "subConfigurations": {
