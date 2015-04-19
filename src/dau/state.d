@@ -23,25 +23,27 @@ class State(T) {
   private bool _active, _started;
 }
 
-/// State stack for managing states
-class StateMachine(T) {
+/// Manages a LIFO stack of states which determine how and instance `T` behaves.
+class StateStack(T) {
   this(T obj) {
     _obj = obj;
   }
 
   @property {
+    /// The state at the top of the stack.
     auto currentState() { return _stateStack.front; }
+    /// True if no states exist on the stack.
     bool empty() { return _stateStack.empty; }
   }
 
-  /// place a new state on the state stack
-  void pushState(State!T state) {
+  /// Place a new state on the state stack.
+  void push(State!T state) {
     _stateStack.insertFront(state);
     debug(StateTrace) { printStateTrace(); }
   }
 
-  /// remove the current state
-  void popState() {
+  /// Remove the current state.
+  void pop() {
     currentState.exit(_obj);
     currentState.end(_obj);
     _stateStack.removeFront;
@@ -49,24 +51,27 @@ class StateMachine(T) {
     debug(StateTrace) { printStateTrace(); }
   }
 
-  /// pop the current state (if there is a current state) and push a new state
-  void setState(State!T state) {
+  /// Pop the current state (if there is a current state) and push a new state.
+  void replace(State!T state) {
     if (!_stateStack.empty) {
-      popState();
+      pop();
     }
-    pushState(state);
+    push(state);
   }
 
+  /// Call `update` on the active state.
   void update(float time, InputManager input) {
     activateTop();
     currentState.update(_obj, time, input);
   }
 
+  /// Call `draw` on the active state.
   void draw(SpriteBatch sb) {
     activateTop();
     currentState.draw(_obj, sb);
   }
 
+  /// Print out the names of all states on the stack. Useful for debugging behavior.
   void printStateTrace() {
     foreach(state ; _stateStack) {
       write(typeid(state).to!string.extension.chompPrefix("."), " | ");

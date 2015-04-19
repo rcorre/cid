@@ -15,6 +15,7 @@ struct GameSettings {
   Color bgColor;       /// Color used to clear screen before drawing.
 }
 
+//TODO: this has to be replaced by something configurable.
 /// paths to configuration files and content
 enum Paths : string {
   bitmapDir     = "content/image",
