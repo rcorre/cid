@@ -173,8 +173,12 @@ Texture[string] _textureStore;
 
 class TextureData {
   mixin JsonizeMe;
-  @jsonize {
+
+  @jsonize(JsonizeOptional.no) {
     string[] sheets;
+  }
+
+  @jsonize(JsonizeOptional.yes) {
     string[] sprites;
     string[] rows;
     int frameWidth, frameHeight;
