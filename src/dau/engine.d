@@ -1,10 +1,14 @@
+/// TODO: move this logic into Game
 module dau.engine;
 
 import std.string, std.algorithm;
 import dau.allegro;
 import dau.setup;
-import dau.scene;
+import dau.state;
+import dau.system;
+import dau.game;
 
+// TODO: kill global state!
 // global variables
 ALLEGRO_DISPLAY* mainDisplay;
 ALLEGRO_EVENT_QUEUE* mainEventQueue;
@@ -16,8 +20,12 @@ void registerEventHandler(AllegroEventHandler handler, ALLEGRO_EVENT_TYPE type) 
   _eventHandlers[type] ~= handler;
 }
 
-/// pass FirstSceneType to instantiate first scene after allegro setup
-int runGame(FirstSceneType)(GameSettings settings) {
+/// Initialize allegro, create a window, and being running the update/draw loop.
+/// Params:
+///   firstState = state to start the game in.
+///   settings = options to configure the game instance
+int runGame(State!Game firstState, GameSettings settings, System[] systems)
+{
   return al_run_allegro({
     al_init();
     _settings = settings;
@@ -45,8 +53,7 @@ int runGame(FirstSceneType)(GameSettings settings) {
     al_register_event_source(mainEventQueue, al_get_timer_event_source(mainTimer));
     al_register_event_source(mainEventQueue, al_get_joystick_event_source());
 
-    with(ALLEGRO_BLEND_MODE)
-    {
+    with(ALLEGRO_BLEND_MODE) {
       al_set_blender(ALLEGRO_BLEND_OPERATIONS.ALLEGRO_ADD, ALLEGRO_ALPHA,
           ALLEGRO_INVERSE_ALPHA);
     }
@@ -59,8 +66,9 @@ int runGame(FirstSceneType)(GameSettings settings) {
 
     runSetupFunctions();
 
+    Game.start(systems, settings);
+
     al_start_timer(mainTimer); // start fps timer
-    setScene(new FirstSceneType(settings));
 
     while(_run) {
       bool frameTick = processEvents();
@@ -134,11 +142,11 @@ void mainUpdate() {
   float current_time = al_get_time();
   float delta = current_time - last_update_time;
   last_update_time = current_time;
-  currentScene.update(delta);
+  Game.instance.update(delta);
 }
 
 void mainDraw() {
-  currentScene.draw();
+  Game.instance.draw();
 }
 
 auto findMaxDisplayMode() {

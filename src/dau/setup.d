@@ -1,5 +1,7 @@
 module dau.setup;
 
+import dau.graphics.color;
+
 alias InitFunction = void function();
 alias ShutdownFunction = void function();
 
@@ -10,6 +12,7 @@ struct GameSettings {
   int screenHeight;    /// Vertical window size in pixels
   int numAudioSamples; /// Number of audio samples that can play at once
   string iconPath;     /// Path to icon to use for app
+  Color bgColor;       /// Color used to clear screen before drawing.
 }
 
 /// paths to configuration files and content
