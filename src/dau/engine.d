@@ -67,6 +67,7 @@ int runGame(State!Game firstState, GameSettings settings, System[] systems)
     runSetupFunctions();
 
     Game.start(systems, settings);
+    Game.instance.states.pushState(firstState);
 
     al_start_timer(mainTimer); // start fps timer
 
