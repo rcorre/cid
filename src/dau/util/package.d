@@ -1,4 +1,4 @@
-module dau.util.all;
+module dau.util;
 
 public import dau.util.func;
 public import dau.util.math;

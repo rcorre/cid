@@ -1,3 +1,3 @@
-module dau.gui.all;
+module dau.gui;
 
 public import dau.gui.manager;

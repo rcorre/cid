@@ -2,7 +2,7 @@ module dau.graphics.primitive;
 
 import dau.allegro;
 import dau.graphics.color;
-import dau.geometry.all;
+import dau.geometry;
 
 /// draw a point
 void draw(T)(Vector2!T point, float radius = 1, ALLEGRO_COLOR color = Color.white) {

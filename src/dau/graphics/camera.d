@@ -2,7 +2,7 @@ module dau.graphics.camera;
 
 import dau.setup;
 import dau.allegro;
-import dau.geometry.all;
+import dau.geometry;
 
 class Camera {
   this(int width, int height) {

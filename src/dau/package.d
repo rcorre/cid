@@ -1,4 +1,4 @@
-module dau.all;
+module dau;
 
 public import dau.allegro;
 public import dau.setup;
@@ -10,8 +10,8 @@ public import dau.state;
 public import dau.system;
 public import dau.sound;
 public import dau.music;
-public import dau.geometry.all;
-public import dau.graphics.all;
-public import dau.util.all;
-public import dau.gui.all;
-public import dau.tool.all;
+public import dau.geometry;
+public import dau.graphics;
+public import dau.util;
+public import dau.gui;
+public import dau.tool;

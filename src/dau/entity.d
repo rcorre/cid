@@ -3,8 +3,8 @@ module dau.entity;
 import std.array;
 import std.range;
 import std.algorithm;
-import dau.graphics.all;
-import dau.geometry.all;
+import dau.graphics;
+import dau.geometry;
 
 class Entity {
   const string tag;

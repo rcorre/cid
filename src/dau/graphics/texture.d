@@ -4,7 +4,7 @@ import std.string, std.conv, std.algorithm, std.file, std.path;
 import jsonizer;
 import dau.allegro;
 import dau.setup;
-import dau.geometry.all;
+import dau.geometry;
 import dau.graphics.color;
 
 private enum {

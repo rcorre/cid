@@ -6,7 +6,7 @@ import std.file;
 import std.algorithm;
 import jsonizer;
 import dau.engine;
-import dau.graphics.all;
+import dau.graphics;
 
 auto loadTiledMap(string path) {
   assert(path.exists, "no map file found at " ~ path);

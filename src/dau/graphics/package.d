@@ -1,4 +1,4 @@
-module dau.graphics.all;
+module dau.graphics;
 
 public import dau.graphics.font;
 public import dau.graphics.color;

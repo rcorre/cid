@@ -6,7 +6,7 @@ import std.range;
 import std.algorithm;
 import dau.allegro;
 import dau.setup;
-import dau.geometry.all;
+import dau.geometry;
 import dau.graphics.color;
 
 enum fileFormat = Paths.fontDir ~ "/%s.ttf"; // TODO: support other formats

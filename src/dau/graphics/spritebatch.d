@@ -3,7 +3,7 @@ module dau.graphics.spritebatch;
 import std.container;
 import dau.allegro;
 import dau.engine;
-import dau.geometry.all;
+import dau.geometry;
 import dau.graphics.sprite;
 import dau.graphics.camera;
 

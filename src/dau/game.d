@@ -8,7 +8,7 @@ import dau.input;
 import dau.entity;
 import dau.system;
 import dau.gui.manager;
-import dau.graphics.all;
+import dau.graphics;
 
 class Game {
   /// TODO: think about ways to deprecate and avoid global state?
