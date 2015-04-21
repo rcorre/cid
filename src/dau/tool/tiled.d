@@ -31,14 +31,17 @@ class MapData {
     isometric
   }
 
-  @jsonize {
+  @jsonize(JsonizeOptional.no) {
     int width, height;         // in number of tiles
     int tilewidth, tileheight; // in pixels
-    float opacity;
     Orientation orientation;
     string[string] properties;
     MapLayer[] layers;
     TileSet[] tilesets;
+  }
+
+  @jsonize(JsonizeOptional.yes) {
+    float opacity;
   }
 
   TileRange layerTileData(int idx) {
@@ -125,16 +128,20 @@ class MapLayer {
 
   mixin JsonizeMe;
 
-  @jsonize {
+  @jsonize(JsonizeOptional.no) {
     int[] data;
-    MapObject[] objects;
-    string[string] properties;
     int width, height;
     string name;
     float opacity;
     Type type;
     bool visible;
     int x, y;
+  }
+
+  // These entries exist only on object layers
+  @jsonize(JsonizeOptional.yes) {
+    MapObject[] objects;
+    string[string] properties;
   }
 }
 
