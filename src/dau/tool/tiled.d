@@ -23,6 +23,14 @@ class TileData {
   string[string] properties;
 }
 
+/// Flags set by Tiled in the guid field.
+enum TileFlag {
+  flipHorizontal = 0x80000000,
+  flipVertical   = 0x40000000,
+  flipDiagonal   = 0x20000000,
+  all            = flipHorizontal | flipVertical | flipDiagonal,
+}
+
 class MapData {
   mixin JsonizeMe;
 
@@ -75,10 +83,13 @@ class MapData {
       }
 
       TileData front() {
+        // TODO: encode flip information
         auto data = new TileData;
         if (isObjectLayer) {
           auto obj = _layer.objects[_idx];
-          auto tileset = gidToTileset(obj.gid);
+          // Tiled encodes flipped state in top 3 bits -- clear these to get the actual gid
+          auto gid = obj.gid & ~(TileFlag.all);
+          auto tileset = gidToTileset(gid);
           data.y = obj.y;
           data.x = obj.x;
           data.row = obj.y / tileset.tileheight - 1; // tiled is off by 1
@@ -90,7 +101,8 @@ class MapData {
           data.objectType = obj.type;
         }
         else {
-          auto gid = _layer.data[_idx];
+          // Tiled encodes flipped state in top 3 bits -- clear these to get the actual gid
+          auto gid = _layer.data[_idx] & (~TileFlag.all);
           auto tileset = gidToTileset(gid);
           data.row = _idx / _layer.width;
           data.col = _idx % _layer.width;
