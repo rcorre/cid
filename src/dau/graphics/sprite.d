@@ -13,6 +13,7 @@ import dau.util.math;
 /// displays a single frame of a texture
 class Sprite {
   Texture.Flip flip;
+
   /// create a sprite from a subsection of the bitmap
   this(string textureName, string spriteName = null) {
     _texture = getTexture(textureName);
@@ -76,22 +77,34 @@ class Sprite {
   }
 
   @property {
-    ref int depth() { return _depth; }
+    /// Sprites with a higher depth are drawn above those with lower depth.
+    int depth() const { return _depth; }
+
     /// width of the sprite after scaling (px)
-    int width() { return cast(int) (_texture.frameWidth * scale.x); }
+    int width() const { return cast(int) (_texture.frameWidth * scale.x); }
+
     /// height of the sprite after scaling (px)
-    int height() { return cast(int) (_texture.frameHeight * scale.y); }
+    int height() const { return cast(int) (_texture.frameHeight * scale.y); }
+
     /// width and height of sprite after scaling
-    auto size() { return Vector2i(width, height); }
+    auto size() const { return Vector2i(width, height); }
+
     /// tint color of the sprite
-    auto tint()                    { return _tint; }
+    auto tint() const { return _tint; }
+
+    /// ditto
     auto tint(Color color) {
       _totalFlashTime = 0;
       return _tint = color;
     }
+
     /// the scale factor of the sprite
-    auto scale()             { return _scaleFactor; }
-    void scale(float scale)  { _scaleFactor = Vector2f(scale, scale); }
+    auto scale() const { return _scaleFactor; }
+
+    /// ditto
+    void scale(float scale) { _scaleFactor = Vector2f(scale, scale); }
+
+    /// ditto
     void scale(Vector2f val) { _scaleFactor = val; }
 
     bool isJiggling() { return _jiggleEffect.active; }
