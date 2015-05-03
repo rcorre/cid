@@ -36,13 +36,15 @@ class Game {
     auto input()    { return _inputManager; }
     auto camera()   { return _camera; }
     auto gui()      { return _guiManager; }
+    auto deltaTime() { return _deltaTime; }
   }
 
   /// called every frame before drawing
   void update(float time) {
+    _deltaTime = time;
     _inputManager.update(time);
     _entityManager.updateEntities(time);
-    _stateStack.update(time, _inputManager);
+    _stateStack.update();
     _guiManager.update(time, input);
     foreach(sys ; _systems) {
       if (sys.active) {
@@ -85,6 +87,7 @@ class Game {
   Camera          _camera;
   System[]        _systems;
   Color           _backgroundColor;
+  float           _deltaTime;
 
   private:
   bool _started;

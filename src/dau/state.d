@@ -16,7 +16,7 @@ class State(T) {
   /// called once whenever the state becomes inactive (popped or new state pushed above)
   void exit(T object) { }
   /// called every frame before drawing
-  void update(T object, float time, InputManager input) { }
+  void update(T object) { }
   /// called every frame between screen clear and screen flip
   void draw(T object, SpriteBatch sb) { }
 
@@ -60,9 +60,9 @@ class StateStack(T) {
   }
 
   /// Call `update` on the active state.
-  void update(float time, InputManager input) {
+  void update() {
     activateTop();
-    currentState.update(_obj, time, input);
+    currentState.update(_obj);
   }
 
   /// Call `draw` on the active state.
