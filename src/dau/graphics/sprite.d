@@ -33,6 +33,16 @@ class Sprite {
     _depth = _texture.defaultDepth;
   }
 
+  /// create a sprite from a subsection of the bitmap
+  this(string name, int row, int col) {
+    _texture = getTexture(name);
+    _row = row;
+    _col = col;
+    assert(_row >= 0 && _col >= 0 && _row < _texture.numRows && _col < _texture.numCols,
+        format("sprite coord %d, %d is out of bounds", _row, _col));
+    _depth = _texture.defaultDepth;
+  }
+
   void flash(float time, Color flashColor) {
     _flashTimer = 0;
     _totalFlashTime = time;
