@@ -44,7 +44,7 @@ class Game {
     _deltaTime = time;
     _inputManager.update(time);
     _entityManager.updateEntities(time);
-    _stateStack.update();
+    _stateStack.run();
     _guiManager.update(time, input);
     foreach(sys ; _systems) {
       if (sys.active) {
@@ -57,7 +57,6 @@ class Game {
   void draw() {
     al_clear_to_color(_backgroundColor);
     _entityManager.drawEntities(_spriteBatch);
-    _stateStack.draw(_spriteBatch);
     _spriteBatch.render(camera);
     _guiManager.draw(); // gui draws over state & entities
     al_flip_display();
