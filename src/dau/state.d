@@ -46,9 +46,10 @@ class StateStack(T) {
 
   /// Remove the current state.
   void pop() {
-    current.exit(_obj);
-    current.end(_obj);
+    auto state = current;
     _stack.removeFront;
+    state.exit(_obj);
+    state.end(_obj);
     _prevState = null;
   }
 
@@ -81,7 +82,8 @@ class StateStack(T) {
   T _obj;
 
   void activateTop() {
-    while (!current._active) { // call enter() is state is returning to activity
+    // need to loop because start/enter may change the active state
+    while (!current._active) {
       current._active = true;
       if (_prevState !is null) {
         _prevState._active = false;
@@ -135,14 +137,6 @@ version (unittest) {
 
     class B : LoggingState { }
 
-    // pushes states during start/end
-    class C : LoggingState {
-      override {
-        void start (Foo foo) { foo.states.push(new A); }
-        void end (Foo foo) { foo.states.push(new B); }
-      }
-    }
-
     // pushes states during enter/exit
     class D : LoggingState {
       override {
@@ -190,4 +184,57 @@ unittest {
   foo.check();
   foo.states.run(); // A B
   foo.check("A.exit", "B.start", "B.enter", "B.run");
+}
+
+// push state during start
+unittest {
+  class C : LoggingState {
+    override void start(Foo foo) { super.start(foo); foo.states.push(new A); }
+  }
+
+  auto foo = new Foo;
+
+  foo.states.push(new C);
+  foo.states.run();
+  // enter never runs, skipped during start
+  foo.check("C.start", "C.exit", "A.start", "A.enter", "A.run");
+  foo.states.pop();
+  foo.check("A.exit", "A.end");
+  // already started, won't start again
+  foo.states.run();
+  foo.check("C.enter", "C.run");
+}
+
+// push state during enter
+unittest {
+  class C : LoggingState {
+    override void enter(Foo foo) { super.enter(foo); foo.states.push(new A); }
+  }
+
+  auto foo = new Foo;
+
+  foo.states.push(new C);
+  foo.states.run();
+  foo.check("C.start", "C.enter", "C.exit", "A.start", "A.enter", "A.run");
+  foo.states.pop();
+  foo.check("A.exit", "A.end");
+  foo.states.run();
+  foo.check("C.enter", "C.exit", "A.start", "A.enter", "A.run");
+}
+
+// push state during exit
+unittest {
+  class C : LoggingState {
+    override void exit(Foo foo) { super.exit(foo); foo.states.push(new A); }
+  }
+
+  auto foo = new Foo;
+
+  foo.states.push(new C);
+  foo.states.run();
+  foo.check("C.start", "C.enter", "C.run");
+  foo.states.pop();
+  foo.states.run();
+  foo.check("C.exit", "C.end", "A.start", "A.enter", "A.run");
+  foo.states.pop();
 }
