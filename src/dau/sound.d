@@ -83,6 +83,6 @@ auto loadSample(string key) {
 }
 
 static this() {
-  onInit({ preloadSoundSamples(); });
-  onShutdown({ unloadSamples(); });
+  //onInit({ preloadSoundSamples(); });
+  //onShutdown({ unloadSamples(); });
 }
