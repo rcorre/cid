@@ -12,15 +12,16 @@ import dau.graphics.spritebatch;
 
 /// Generic behavioral state
 class State(T) {
-  /// Called only once before the state is first run
+  /// Called only once before the state is first run.
   void start(T object) { }
-  /// Called only once when the state is removed
+  /// Called only once when the state is removed.
   void end(T object) { }
-  /// Called once whenever the state becomes active (pushed to top or state above is popped)
+  /// Called before run if this was not the last run state.
   void enter(T object) { }
-  /// Called once whenever the state becomes inactive (popped or new state pushed above)
+  /// Called once whenever the state becomes inactive (popped or new state pushed above).
+  /// Only called if enter was previously called.
   void exit(T object) { }
-  /// Called every frame before drawing
+  /// Called every frame before drawing.
   void run(T object) { }
 
   private bool _active, _started;
@@ -48,7 +49,7 @@ class StateStack(T) {
   void pop() {
     auto state = current;
     _stack.removeFront;
-    state.exit(_obj);
+    if (state._active) state.exit(_obj); // only exit if enter was previously called
     state.end(_obj);
     _prevState = null;
   }
@@ -79,7 +80,9 @@ class StateStack(T) {
     current.run(_obj);
   }
 
-  /// Return a string containing the name of each state on the stack, with the 'lowest' on the left
+  /// Return a string containing the name of each state on the stack, with the 'lowest' on the left.
+  ///
+  /// This is useful for debugging state.
   string stackString() {
     import std.string : split, join;
     import std.algorithm : map;
@@ -96,7 +99,6 @@ class StateStack(T) {
   void activateTop() {
     // need to loop because start/enter may change the active state
     while (!current._active) {
-      current._active = true;
       if (_prevState !is null) {
         _prevState._active = false;
         _prevState.exit(_obj);
@@ -107,6 +109,7 @@ class StateStack(T) {
         current.start(_obj);
       }
       if (current._started) { // state might have changed after start
+        current._active = true;
         current.enter(_obj);
       }
     }
@@ -248,5 +251,51 @@ unittest {
   foo.states.pop();
   foo.states.run();
   foo.check("C.exit", "C.end", "A.start", "A.enter", "A.run");
+}
+
+// push state during end
+unittest {
+  class C : LoggingState {
+    override void end(Foo foo) { super.end(foo); foo.states.push(new A); }
+  }
+
+  auto foo = new Foo;
+
+  foo.states.push(new C);
+  foo.states.run();
+  foo.check("C.start", "C.enter", "C.run");
   foo.states.pop();
+  foo.states.run();
+  foo.check("C.exit", "C.end", "A.start", "A.enter", "A.run");
+}
+
+
+// push state during run
+unittest {
+  class C : LoggingState {
+    override void run(Foo foo) { super.run(foo); foo.states.push(new A); }
+  }
+
+  auto foo = new Foo;
+
+  foo.states.push(new C);
+  foo.states.run();
+  foo.check("C.start", "C.enter", "C.run");
+  foo.states.run();
+  foo.check("C.exit", "A.start", "A.enter", "A.run");
+}
+
+// pop state during start -- should skip enter
+unittest {
+  class C : LoggingState {
+    override void start(Foo foo) { super.start(foo); foo.states.pop(); }
+  }
+
+  auto foo = new Foo;
+
+  foo.states.push(new A);
+  foo.states.push(new C);
+  foo.states.run();
+  // enter is skipped, so don't run exit.
+  foo.check("C.start", "C.end", "A.start", "A.enter", "A.run");
 }
