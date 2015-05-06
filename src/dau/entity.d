@@ -9,6 +9,10 @@ import dau.geometry;
 class Entity {
   const string tag;
 
+  this(string tag) {
+    this.tag = tag;
+  }
+
   this(Rect2i area, string tag) {
     _area = area;
     this.tag = tag;
