@@ -7,8 +7,6 @@
 module dau.state;
 
 import std.container : SList;
-import dau.input;
-import dau.graphics.spritebatch;
 
 /// Generic behavioral state
 class State(T) {
@@ -50,7 +48,7 @@ class StateStack(T) {
     auto state = current;
     _stack.removeFront;
     if (state._active) state.exit(_obj); // only exit if enter was previously called
-    state.end(_obj);
+    if (state._started) state.end(_obj);
     _prevState = null;
   }
 
@@ -61,7 +59,7 @@ class StateStack(T) {
   ///   Expected: Type of state you expect to pop from the top
   void pop(Expected)() {
     import std.format : format;
-    assert(typeid(current) == typeid(Expected), 
+    assert(typeid(current) == typeid(Expected),
         "expected to pop state %s, but found %s".format(typeid(current), typeid(Expected)));
     pop();
   }
@@ -142,7 +140,7 @@ version (unittest) {
         void run   (Foo foo) { foo.log ~= name ~ ".run";   }
       }
 
-      @property string name() { 
+      @property string name() {
         import std.string : split;
         return this.classinfo.name.split(".")[$ - 1];
       }
@@ -269,7 +267,6 @@ unittest {
   foo.check("C.exit", "C.end", "A.start", "A.enter", "A.run");
 }
 
-
 // push state during run
 unittest {
   class C : LoggingState {
@@ -298,4 +295,73 @@ unittest {
   foo.states.run();
   // enter is skipped, so don't run exit.
   foo.check("C.start", "C.end", "A.start", "A.enter", "A.run");
+}
+
+// pop state during enter -- should skip run
+unittest {
+  class C : LoggingState {
+    override void enter(Foo foo) { super.enter(foo); foo.states.pop(); }
+  }
+
+  auto foo = new Foo;
+
+  foo.states.push(new A);
+  foo.states.push(new C);
+  foo.states.run();
+  foo.check("C.start", "C.enter", "C.exit", "C.end", "A.start", "A.enter", "A.run");
+}
+
+// pop state during exit
+unittest {
+  class C : LoggingState {
+    override void exit(Foo foo) { super.exit(foo); foo.states.pop(); }
+  }
+
+  auto foo = new Foo;
+
+  foo.states.push(new A);
+  foo.states.push(new B); // this will get popped when C exits
+  foo.states.push(new C);
+  foo.states.run();
+  foo.check("C.start", "C.enter", "C.run");
+  foo.states.pop();
+  foo.check("C.exit", "C.end");
+  foo.states.run();
+  foo.check("A.start", "A.enter", "A.run");
+}
+
+// pop state during end
+unittest {
+  class C : LoggingState {
+    override void end(Foo foo) { super.end(foo); foo.states.pop(); }
+  }
+
+  auto foo = new Foo;
+
+  foo.states.push(new A);
+  foo.states.push(new B); // this will get popped when C ends
+  foo.states.push(new C);
+  foo.states.run();
+  foo.check("C.start", "C.enter", "C.run");
+  foo.states.pop();
+  // B.exit/end are not run as B was never entered/started
+  foo.check("C.exit", "C.end");
+  foo.states.run();
+  foo.check("A.start", "A.enter", "A.run");
+}
+
+// pop state during run
+unittest {
+  class C : LoggingState {
+    override void run(Foo foo) { super.run(foo); foo.states.pop(); }
+  }
+
+  auto foo = new Foo;
+
+  foo.states.push(new A);
+  foo.states.push(new C);
+  foo.states.run();
+  foo.check("C.start", "C.enter", "C.run", "C.exit", "C.end");
+  foo.states.run();
+  foo.check("A.start", "A.enter", "A.run");
 }
