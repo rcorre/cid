@@ -21,8 +21,6 @@ class State(T) {
   void exit(T object) { }
   /// Called every frame before drawing.
   void run(T object) { }
-
-  private bool _active, _started;
 }
 
 /// Manages a LIFO stack of states which determine how an instance of `T` behaves.
@@ -40,16 +38,24 @@ class StateStack(T) {
 
   /// Place a new state on the state stack.
   void push(State!T state) {
+    if (_currentStateEntered) {
+      current.exit(_obj);
+      _currentStateEntered = false;
+    }
+
     _stack.insertFront(state);
+    state.start(_obj);
   }
 
   /// Remove the current state.
   void pop() {
-    auto state = current;
+    auto state = current; // get ref to current state, top may change during exit/end
     _stack.removeFront;
-    if (state._active) state.exit(_obj); // only exit if enter was previously called
-    if (state._started) state.end(_obj);
-    _prevState = null;
+    if (_currentStateEntered) {
+      _currentStateEntered = false;
+      state.exit(_obj);
+    }
+    state.end(_obj);
   }
 
   /// Pop the current state, but assert that the current state is of the expected type.
@@ -74,14 +80,19 @@ class StateStack(T) {
 
   /// Call `run` on the active state.
   void run() {
-    activateTop();
+    // current.enter() could push pop states, so keep going until the current state is entered
+    while (!_currentStateEntered) {
+      _currentStateEntered = true;
+      current.enter(_obj);
+    }
+
     current.run(_obj);
   }
 
   /// Return a string containing the name of each state on the stack, with the 'lowest' on the left.
   ///
   /// This is useful for debugging state.
-  string stackString() {
+  string printout() {
     import std.string : split, join;
     import std.algorithm : map;
 
@@ -91,27 +102,8 @@ class StateStack(T) {
 
   private:
   SList!(State!T) _stack;
-  State!T _prevState;
+  bool _currentStateEntered;
   T _obj;
-
-  void activateTop() {
-    // need to loop because start/enter may change the active state
-    while (!current._active) {
-      if (_prevState !is null) {
-        _prevState._active = false;
-        _prevState.exit(_obj);
-      }
-      _prevState = current;
-      if (!current._started) {
-        current._started = true;
-        current.start(_obj);
-      }
-      if (current._started) { // state might have changed after start
-        current._active = true;
-        current.enter(_obj);
-      }
-    }
-  }
 }
 
 version (unittest) {
@@ -172,12 +164,11 @@ version (unittest) {
 unittest {
   auto foo = new Foo;
 
-  // just pushing shouldn't call anything
   foo.states.push(new A);
-  foo.check();
+  foo.check("A.start");
 
   foo.states.run();
-  foo.check("A.start", "A.enter", "A.run");
+  foo.check("A.enter", "A.run");
   foo.states.run();
   foo.check("A.run");
 
@@ -194,9 +185,9 @@ unittest {
   foo.check("A.start", "A.enter", "A.run");
 
   foo.states.push(new B);
-  foo.check();
+  foo.check("A.exit", "B.start");
   foo.states.run(); // A B
-  foo.check("A.exit", "B.start", "B.enter", "B.run");
+  foo.check("B.enter", "B.run");
 }
 
 // push state during start
@@ -210,7 +201,7 @@ unittest {
   foo.states.push(new C);
   foo.states.run();
   // enter never runs, skipped during start
-  foo.check("C.start", "C.exit", "A.start", "A.enter", "A.run");
+  foo.check("C.start", "A.start", "A.enter", "A.run");
   foo.states.pop();
   foo.check("A.exit", "A.end");
   // already started, won't start again
@@ -247,8 +238,9 @@ unittest {
   foo.states.run();
   foo.check("C.start", "C.enter", "C.run");
   foo.states.pop();
+  foo.check("C.exit", "A.start", "C.end");
   foo.states.run();
-  foo.check("C.exit", "C.end", "A.start", "A.enter", "A.run");
+  foo.check("A.enter", "A.run");
 }
 
 // push state during end
@@ -277,9 +269,9 @@ unittest {
 
   foo.states.push(new C);
   foo.states.run();
-  foo.check("C.start", "C.enter", "C.run");
+  foo.check("C.start", "C.enter", "C.run", "C.exit", "A.start");
   foo.states.run();
-  foo.check("C.exit", "A.start", "A.enter", "A.run");
+  foo.check("A.enter", "A.run");
 }
 
 // pop state during start -- should skip enter
@@ -292,9 +284,10 @@ unittest {
 
   foo.states.push(new A);
   foo.states.push(new C);
+  foo.check("A.start", "C.start", "C.end");
   foo.states.run();
   // enter is skipped, so don't run exit.
-  foo.check("C.start", "C.end", "A.start", "A.enter", "A.run");
+  foo.check("A.enter", "A.run");
 }
 
 // pop state during enter -- should skip run
@@ -307,8 +300,9 @@ unittest {
 
   foo.states.push(new A);
   foo.states.push(new C);
+  foo.check("A.start", "C.start");
   foo.states.run();
-  foo.check("C.start", "C.enter", "C.exit", "C.end", "A.start", "A.enter", "A.run");
+  foo.check("C.enter", "C.exit", "C.end", "A.enter", "A.run");
 }
 
 // pop state during exit
@@ -322,12 +316,13 @@ unittest {
   foo.states.push(new A);
   foo.states.push(new B); // this will get popped when C exits
   foo.states.push(new C);
+  foo.check("A.start", "B.start", "C.start");
   foo.states.run();
-  foo.check("C.start", "C.enter", "C.run");
+  foo.check("C.enter", "C.run");
   foo.states.pop();
-  foo.check("C.exit", "C.end");
+  foo.check("C.exit", "B.end", "C.end"); // C pops B while it is ending
   foo.states.run();
-  foo.check("A.start", "A.enter", "A.run");
+  foo.check("A.enter", "A.run"); // only A is left
 }
 
 // pop state during end
@@ -341,13 +336,13 @@ unittest {
   foo.states.push(new A);
   foo.states.push(new B); // this will get popped when C ends
   foo.states.push(new C);
+  foo.check("A.start", "B.start", "C.start");
   foo.states.run();
-  foo.check("C.start", "C.enter", "C.run");
+  foo.check("C.enter", "C.run");
   foo.states.pop();
-  // B.exit/end are not run as B was never entered/started
-  foo.check("C.exit", "C.end");
+  foo.check("C.exit", "C.end", "B.end"); // B was not entered, so no corresponding exit, just end
   foo.states.run();
-  foo.check("A.start", "A.enter", "A.run");
+  foo.check("A.enter", "A.run");
 }
 
 // pop state during run
@@ -360,8 +355,9 @@ unittest {
 
   foo.states.push(new A);
   foo.states.push(new C);
+  foo.check("A.start", "C.start");
   foo.states.run();
-  foo.check("C.start", "C.enter", "C.run", "C.exit", "C.end");
+  foo.check("C.enter", "C.run", "C.exit", "C.end");
   foo.states.run();
-  foo.check("A.start", "A.enter", "A.run");
+  foo.check("A.enter", "A.run");
 }
