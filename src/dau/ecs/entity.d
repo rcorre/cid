@@ -1,40 +1,38 @@
 module dau.ecs.entity;
 
-struct Entity {
+class Entity {
   private {
     Component[TypeInfo] _components;
     bool _active;
   }
 
-  @property {
-    /** 
-     * Get an attached component of type T, or null if there is no attached component of that type.
-     *
-     * Params:
-     *  T = Type of component to attach. Must be a subclass of Component.
-     */
-    T component(T : Component)() {
-      auto type = typeid(BaseComponentType!T);
-      return _components[type];
-    }
+  /** 
+   * Get an attached component of type T, or null if there is no attached component of that type.
+   *
+   * Params:
+   *  T = Type of component to attach. Must be a subclass of Component.
+   */
+  @property T component(T : Component)() {
+    auto type = BaseComponentType!T;
+    return cast(T) _components[type];
+  }
 
-    /**
-     * Attach a component to this entity.
-     *
-     * Asserts if comp is already attached to an entity
-     * Asserts if this entity already has a component of the given type
-     * 
-     * Params:
-     *  T = Type of component to attach. Must be a subclass of Component.
-     *  comp = component to attach
-     */
-    void component(T : Component)(T comp) {
-      auto type = typeid(BaseComponentType!T);
-      assert(comp._owner is null, "attaching component that already has an owner");
-      assert(_components[type] is null, "already have a component of type " ~ T.stringof);
-      _components[type] = comp;
-      comp._owner = this;
-    }
+  /**
+   * Attach a component to this entity.
+   *
+   * Asserts if comp is already attached to an entity
+   * Asserts if this entity already has a component of the given type
+   * 
+   * Params:
+   *  T = Type of component to attach. Must be a subclass of Component.
+   *  comp = component to attach
+   */
+  void attach(Component comp) {
+    auto type = comp.baseComponentType;
+    assert(comp._owner is null, "attaching component that already has an owner");
+    assert(_components[type] is null, "cannot attach two of same component type");
+    _components[type] = comp;
+    comp._owner = this;
   }
 
   /**
@@ -69,7 +67,7 @@ abstract class Component {
 
   void deactivate() {
     _active = false;
-    _owner._components[typeid(this)] = null;
+    _owner._components[baseComponentType(this)] = null;
   }
 }
 
@@ -78,8 +76,7 @@ private:
 
 // compile time component base type
 template BaseComponentType(T : Component) {
-  static assert(!is(T == Component), "Component type must be a subclass of Component");
-  enum BaseComponentType = BaseClassesTuple!T[$ - 2];
+  typeid(baseComponentType(T.init));
 }
 
 // runtime component base type
@@ -91,4 +88,32 @@ TypeInfo baseComponentType(Component c) {
   }
 
   return type; 
+}
+
+version(unittest) {
+  import std.exception : assertThrown;
+
+  class A : Component { }
+  class B : Component { }
+  class C : A { }
+  class D : B { }
+  class E : D { }
+}
+
+// baseComponentType
+unittest {
+  assert(baseComponentType(A.init) == typeid(Component));
+  assert(baseComponentType(B.init) == typeid(Component));
+  assert(baseComponentType(C.init) == typeid(A));
+  assert(baseComponentType(D.init) == typeid(B));
+  assert(baseComponentType(E.init) == typeid(B));
+}
+
+// BaseComponentType
+unittest {
+  static assert(BaseComponentType!A == typeid(Component));
+  static assert(BaseComponentType!B == typeid(Component));
+  static assert(BaseComponentType!C == typeid(A));
+  static assert(BaseComponentType!D == typeid(B));
+  static assert(BaseComponentType!E == typeid(B));
 }
