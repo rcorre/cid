@@ -8,6 +8,7 @@ import jsonizer;
 import dau.allegro;
 import dau.util.math;
 
+/// Wrapper around an ALLEGRO_COLOR
 struct Color {
   mixin JsonizeMe;
 
@@ -72,6 +73,14 @@ struct Color {
   }
 }
 
+/**
+ * Linearly interpolate between two colors.
+ *
+ * Params:
+ *  start  = color on 0 endpoint
+ *  end    = color on 1 endpoint
+ *  factor = value between 0 and 1 to choose between endpoints
+ */
 Color lerp(Color start, Color end, float factor) {
   auto r = dau.util.math.lerp(start.r, end.r, factor);
   auto g = dau.util.math.lerp(start.g, end.g, factor);
@@ -80,6 +89,23 @@ Color lerp(Color start, Color end, float factor) {
   return Color(r, g, b, a);
 }
 
+/// Interpolation between through gray shades between black and white
+unittest {
+  // 0 chooses the first color, black
+  assert(lerp(Color.black, Color.white, 0.0) == Color.black);
+  // 0.5 is a gray halfway between black and white
+  assert(lerp(Color.black, Color.white, 0.5) == Color.gray);
+  // 1 chooses the last color, white
+  assert(lerp(Color.black, Color.white, 1.0) == Color.white);
+}
+
+/**
+ * Linearly interpolate through a spectrum of colors.
+ *
+ * Params:
+ *  colors = spectrum of colors through which factor spans
+ *  factor = value between 0 and 1 representing a point on the spectrum
+ */
 Color lerp(Color[] colors, float factor) {
   if (colors.length == 2) {
     return lerp(colors[0], colors[1], factor);
@@ -95,6 +121,19 @@ Color lerp(Color[] colors, float factor) {
   }
   factor = (factor % colorTime) / colorTime;
   return lerp(colors[idx], colors[idx + 1], factor);
+}
+
+/// Interpolation through a spectrum of colors
+unittest {
+  auto colors = [Color.black, Color.white, Color.red];
+  assert(colors.lerp(0)    == Color.black);
+  assert(colors.lerp(0.5f) == Color.white);
+  assert(colors.lerp(1.0f) == Color.red);
+
+  // halfway between black and white
+  assert(colors.lerp(0.25f) == Color.gray);
+  // halfway between white and red
+  assert(colors.lerp(0.75f) == Color(1, 0.5f, 0.5f));
 }
 
 unittest {
@@ -121,15 +160,6 @@ unittest {
   // unsigned color with specified alpha
   auto c4 = Color(0, 0, 255, 127);
   assert(approxEqual(c4, Color(0, 0, 1, 127 / 255f)));
-
-  auto c5 = Color.black.lerp(Color.white, 0.5);
-  assert(c5 == Color(0.5, 0.5, 0.5, 1));
-
-  assert(lerp([Color.black, Color.white, Color.red], 0) == Color.black);
-  assert(lerp([Color.black, Color.white, Color.red], 0.1) == Color(0.2, 0.2, 0.2));
-  assert(lerp([Color.black, Color.white, Color.red], 0.5) == Color.white);
-  assert(approxEqual(lerp([Color.black, Color.white, Color.red], 0.6), Color(1, 0.8, 0.8)));
-  assert(approxEqual(lerp([Color.black, Color.white, Color.red], 1), Color.red));
 
   // parsing from strings
   assert(approxEqual(Color("1,0,1")              , Color(1, 0, 1.0)));
