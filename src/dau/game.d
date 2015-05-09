@@ -62,7 +62,6 @@ class Game {
     al_flip_display();
   }
 
-
   S getSystem(S)() {
     auto res = _systems.map!(x => cast(S) x).find!(x => x !is null);
     assert(!res.empty, "failed to find system " ~ S.stringof);
@@ -90,11 +89,4 @@ class Game {
 
   private:
   bool _started;
-}
-
-interface IScene {
-  void enter();
-  void exit();
-  void update(float time);
-  void draw();
 }
