@@ -57,8 +57,6 @@ int runGame(State!Game firstState, GameSettings settings, System[] systems)
 
     runSetupFunctions();
 
-    Game.start(systems, settings);
-    Game.instance.states.push(firstState);
 
     al_start_timer(mainTimer); // start fps timer
 
@@ -119,11 +117,9 @@ void mainUpdate() {
   float current_time = al_get_time();
   float delta = current_time - last_update_time;
   last_update_time = current_time;
-  Game.instance.update(delta);
 }
 
 void mainDraw() {
-  Game.instance.draw();
 }
 
 private:

@@ -10,20 +10,9 @@ import dau.gui.manager;
 import dau.graphics;
 
 class Game {
-  /// TODO: think about ways to deprecate and avoid global state?
-  static Game instance;
-
-  static void start(System[] systems, GameSettings settings)
-  {
-    instance = new Game(systems, settings);
-  }
-
   this(System[] systems, GameSettings settings) {
     _inputManager    = new InputManager;
-    _camera          = new Camera(settings.screenWidth, settings.screenHeight);
-    _systems         = systems;
     _stateStack      = new StateStack!Game(this);
-    _backgroundColor = settings.bgColor;
   }
 
   @property {
