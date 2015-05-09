@@ -5,7 +5,6 @@ import dau.setup;
 import dau.allegro;
 import dau.state;
 import dau.input;
-import dau.entity;
 import dau.system;
 import dau.gui.manager;
 import dau.graphics;
@@ -21,9 +20,6 @@ class Game {
 
   this(System[] systems, GameSettings settings) {
     _inputManager    = new InputManager;
-    _entityManager   = new EntityManager;
-    _spriteBatch     = new SpriteBatch;
-    _guiManager      = new GUIManager;
     _camera          = new Camera(settings.screenWidth, settings.screenHeight);
     _systems         = systems;
     _stateStack      = new StateStack!Game(this);
@@ -31,11 +27,9 @@ class Game {
   }
 
   @property {
-    auto entities() { return _entityManager; }
     auto states()   { return _stateStack; }
     auto input()    { return _inputManager; }
     auto camera()   { return _camera; }
-    auto gui()      { return _guiManager; }
     auto deltaTime() { return _deltaTime; }
   }
 
@@ -43,9 +37,7 @@ class Game {
   void update(float time) {
     _deltaTime = time;
     _inputManager.update(time);
-    _entityManager.updateEntities(time);
     _stateStack.run();
-    _guiManager.update(time, input);
     foreach(sys ; _systems) {
       if (sys.active) {
         sys.update(time, input);
@@ -56,9 +48,6 @@ class Game {
   /// called every frame between screen clear and screen flip
   void draw() {
     al_clear_to_color(_backgroundColor);
-    _entityManager.drawEntities(_spriteBatch);
-    _spriteBatch.render(camera);
-    _guiManager.draw(); // gui draws over state & entities
     al_flip_display();
   }
 
@@ -77,11 +66,8 @@ class Game {
   }
 
   private:
-  EntityManager   _entityManager;
-  GUIManager      _guiManager;
   StateStack!Game _stateStack;
   InputManager    _inputManager;
-  SpriteBatch     _spriteBatch;
   Camera          _camera;
   System[]        _systems;
   Color           _backgroundColor;

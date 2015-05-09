@@ -10,7 +10,6 @@ import dau.game;
 
 // TODO: kill global state!
 // global variables
-ALLEGRO_DISPLAY* mainDisplay;
 ALLEGRO_EVENT_QUEUE* mainEventQueue;
 ALLEGRO_TIMER* mainTimer;
 
@@ -31,8 +30,6 @@ int runGame(State!Game firstState, GameSettings settings, System[] systems)
     _settings = settings;
 
     al_set_new_display_option(ALLEGRO_DISPLAY_OPTIONS.ALLEGRO_VSYNC, 1, ALLEGRO_SUGGEST);
-    mainDisplay = al_create_display(settings.screenWidth, settings.screenHeight);
-    setDisplayTransform(al_get_display_width(mainDisplay), al_get_display_height(mainDisplay));
     mainEventQueue = al_create_event_queue();
     mainTimer = al_create_timer(1.0 / settings.fps);
 
@@ -47,7 +44,7 @@ int runGame(State!Game firstState, GameSettings settings, System[] systems)
 
     al_reserve_samples(settings.numAudioSamples);
 
-    al_register_event_source(mainEventQueue, al_get_display_event_source(mainDisplay));
+    //al_register_event_source(mainEventQueue, al_get_display_event_source(mainDisplay));
     al_register_event_source(mainEventQueue, al_get_keyboard_event_source());
     al_register_event_source(mainEventQueue, al_get_mouse_event_source());
     al_register_event_source(mainEventQueue, al_get_timer_event_source(mainTimer));
@@ -56,12 +53,6 @@ int runGame(State!Game firstState, GameSettings settings, System[] systems)
     with(ALLEGRO_BLEND_MODE) {
       al_set_blender(ALLEGRO_BLEND_OPERATIONS.ALLEGRO_ADD, ALLEGRO_ALPHA,
           ALLEGRO_INVERSE_ALPHA);
-    }
-
-    if (settings.iconPath !is null) {
-      _icon = al_load_bitmap(settings.iconPath.toStringz);
-      al_set_display_icon(mainDisplay, _icon);
-      onShutdown({ al_destroy_bitmap(_icon); });
     }
 
     runSetupFunctions();
@@ -89,21 +80,6 @@ void shutdownGame() {
   _run = false;
 }
 
-void resizeDisplay(int width, int height) {
-  al_resize_display(mainDisplay, width, height);
-  setDisplayTransform(width, height);
-}
-
-auto getSupportedDisplayModes() {
-  ALLEGRO_DISPLAY_MODE mode;
-  ALLEGRO_DISPLAY_MODE[] modes;
-  for(int i = 0 ; i < al_get_num_display_modes() ; i++) {
-    al_get_display_mode(i, &mode);
-    modes ~= mode;
-  }
-  return modes.sort!((a,b) => a.width < b.width);
-}
-
 private:
 bool _run = true;
 
@@ -127,7 +103,7 @@ bool processEvents() {
       }
     case ALLEGRO_EVENT_DISPLAY_RESIZE:
       {
-        al_acknowledge_resize(mainDisplay);
+        //al_acknowledge_resize(mainDisplay);
         break;
       }
     default:
@@ -148,27 +124,6 @@ void mainUpdate() {
 
 void mainDraw() {
   Game.instance.draw();
-}
-
-auto findMaxDisplayMode() {
-  ALLEGRO_DISPLAY_MODE mode, largest;
-  for(int i = 0 ; i < al_get_num_display_modes() ; i++) {
-    al_get_display_mode(0, &mode);
-    if (mode.width > largest.width) {
-      largest = mode;
-    }
-  }
-  return largest;
-}
-
-void setDisplayTransform(int width, int height) {
-  float sx = cast(float) width / _settings.screenWidth;
-  float sy = cast(float) height / _settings.screenHeight;
-  float scale = min(sx, sy);
-  ALLEGRO_TRANSFORM trans;
-  al_identity_transform(&trans);
-  al_scale_transform(&trans, scale, scale);
-  al_use_transform(&trans);
 }
 
 private:

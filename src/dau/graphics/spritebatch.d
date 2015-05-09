@@ -4,9 +4,9 @@ import std.container;
 import dau.allegro;
 import dau.engine;
 import dau.geometry;
-import dau.graphics.sprite;
 import dau.graphics.camera;
 
+/*
 // TODO: group textures and use al_hold_bitmap_drawing
 class SpriteBatch {
   this() {
@@ -53,3 +53,4 @@ class SpriteBatch {
   alias SpriteStore = RedBlackTree!(Entry, (a,b) => a.sprite.depth < b.sprite.depth, true);
   SpriteStore _sprites;
 }
+*/

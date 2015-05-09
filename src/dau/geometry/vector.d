@@ -1,12 +1,15 @@
 module dau.geometry.vector;
 
 import std.math, std.traits, std.range, std.conv, std.string, std.algorithm;
+import jsonizer;
 
 public alias Vector2f = Vector2!float;
 public alias Vector2i = Vector2!int;
 
 /// A 2-dimensional vector
 struct Vector2(T : real) {
+  mixin JsonizeMe;
+
   static if (isFloatingPoint!T) {
     alias AngleType = T;
   }
@@ -15,8 +18,10 @@ struct Vector2(T : real) {
   }
 
   /** Members *****************************************************************/
-  T x = 0; 
-  T y = 0;
+  @jsonize {
+    T x = 0; 
+    T y = 0;
+  }
 
   /** Static *****************************************************************/
   static auto fromAngle(AngleType angle) {
