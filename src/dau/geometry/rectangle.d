@@ -7,14 +7,18 @@ import dau.util.math : clamp;
 alias Rect2i = Rect2!int;
 alias Rect2f = Rect2!float;
 
-struct Rect2(T) {
+struct Rect2(T : real) {
   T x, y, width, height;
 
   this(T x, T y, T width, T height) {
-    this.x = x;
-    this.y = y;
-    this.width = width;
+    this.x      = x;
+    this.y      = y;
+    this.width  = width;
     this.height = height;
+  }
+
+  this(T[4] vals) {
+    this(vals[0], vals[1], vals[2], vals[3]);
   }
 
   this(Vector2!T topLeft, T width, T height) {
@@ -76,6 +80,13 @@ struct Rect2(T) {
       bottom = val.y;
       return bottomRight;
     }
+  }
+
+  void opAssign(T[4] vals) {
+    this.x      = vals[0];
+    this.y      = vals[1];
+    this.width  = vals[2];
+    this.height = vals[3];
   }
 
   /// cast to another rect type

@@ -23,6 +23,16 @@ struct Vector2(T : real) {
     T y = 0;
   }
 
+  this(T x, T y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  this(T[2] vals) {
+    this.x = vals[0];
+    this.y = vals[1];
+  }
+
   /** Static *****************************************************************/
   static auto fromAngle(AngleType angle) {
     return Vector2!T(cast(T) cos(angle), cast(T) sin(angle));
@@ -159,6 +169,11 @@ struct Vector2(T : real) {
   void opAssign(V)(Vector2!V rhs) {
     x = cast(T) rhs.x;
     y = cast(T) rhs.y;
+  }
+
+  void opAssign(T[2] vals) {
+    x = vals[0];
+    y = vals[1];
   }
 
   // == other vector, even if types differ
