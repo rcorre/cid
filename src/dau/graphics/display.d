@@ -1,3 +1,21 @@
+/**
+  * Controls the game window and drawing backbuffer.
+  *
+  * Authors: <a href="https://github.com/rcorre">rcorre</a>
+	* License: <a href="http://opensource.org/licenses/MIT">MIT</a>
+	* Copyright: Copyright © 2015, rcorre
+  *
+  * Examples:
+  * A display is created as part of starting the game:
+  * ----------------------------------------
+  * Game.Settings settings;
+  * settings.display.windowSize = Vector2i(800, 600);
+  * settings.display.canvasSize = Vector2i(800, 600);
+  * settings.display.color = Color.black;
+  * // set other game settings before running...
+  * Game.run(new MyGameState(), settings);
+  * ----------------------------------------
+  */
 module dau.graphics.display;
 
 import std.algorithm : min;
@@ -12,9 +30,9 @@ struct Display {
   struct Settings {
     mixin JsonizeMe;
     @jsonize {
-      Vector2i displaySize; /// Size of the game window
-      Vector2i canvasSize;  /// Size of the backbuffer upon which graphics are rendered
-      Color    color;       /// Color used to clear screen
+      Vector2i windowSize; /// Size of the game window
+      Vector2i canvasSize; /// Size of the backbuffer upon which graphics are rendered
+      Color    color;      /// Color used to clear screen
     }
   }
 
@@ -27,9 +45,12 @@ struct Display {
 
   @disable this();
 
+  /// Create a game window with the provided settings.
   this(Settings settings) {
-    _display = al_create_display(settings.displaySize.x, settings.displaySize.y);
+    _color      = settings.color;
+    _display    = al_create_display(settings.windowSize.x, settings.windowSize.y);
     _canvasSize = settings.canvasSize;
+    setDisplayTransform();
 
     with(ALLEGRO_BLEND_MODE) {
       al_set_blender(ALLEGRO_BLEND_OPERATIONS.ALLEGRO_ADD, ALLEGRO_ALPHA,
@@ -39,13 +60,13 @@ struct Display {
 
   @property {
     /// Size of the game window
-    auto displaySize() {
+    auto windowSize() {
       return Vector2i(al_get_display_width(_display), al_get_display_height(_display));
     }
 
     /// Set the size of the game window.
     /// Will modify the display transform accordingly.
-    void displaySize(Vector2i size) {
+    void windowSize(Vector2i size) {
       al_resize_display(_display, size.x, size.y);
       setDisplayTransform();
     }
@@ -94,8 +115,8 @@ struct Display {
 
   private:
   void setDisplayTransform() {
-    float scaleX = cast(float) displaySize.x / canvasSize.x;
-    float scaleY = cast(float) displaySize.y / canvasSize.y;
+    float scaleX = cast(float) windowSize.x / canvasSize.x;
+    float scaleY = cast(float) windowSize.y / canvasSize.y;
     float scale = min(scaleX, scaleY);
     al_identity_transform(&_transform);
     al_scale_transform(&_transform, scale, scale);
