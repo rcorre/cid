@@ -8,5 +8,6 @@ __test__library__
 *.lib
 
 # generated documentation
+docs/
 docs.json
 __dummy.html
