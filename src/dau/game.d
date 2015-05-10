@@ -1,3 +1,10 @@
+/**
+  * Main entry point for starting a game.
+  *
+  * Authors: <a href="https://github.com/rcorre">rcorre</a>
+	* License: <a href="http://opensource.org/licenses/MIT">MIT</a>
+	* Copyright: Copyright © 2015, rcorre
+  */
 module dau.game;
 
 import std.algorithm;
@@ -8,6 +15,7 @@ import dau.system;
 import dau.gui.manager;
 import dau.graphics;
 
+/// Main game class.
 class Game {
   /// Settings used to configure the game.
   struct Settings {
@@ -17,14 +25,24 @@ class Game {
     Display.Settings display; /// Game window and backbuffer configuration
   }
 
-
   @property {
+    /// Stack of states that manages game flow.
     auto states()    { return _stateStack; }
+    /// Access the game window and backbuffer.
     auto display()   { return _display; }
+    /// Recieve input events.
     auto input()     { return _inputManager; }
+    /// Seconds elapsed between the current frame and the previous frame.
     auto deltaTime() { return _deltaTime; }
   }
 
+  /**
+   * Main entry point for starting a game. Loops until stop() is called on the game instance.
+   *
+   * Params:
+   *  firstState = initial state that the game will begin in
+   *  settings = configures the game
+   */
   static int run(State!Game firstState, Settings settings) {
     int mainFn() {
       allegroInitAll();
@@ -45,6 +63,7 @@ class Game {
     return al_run_allegro(&mainFn);
   }
 
+  /// End the main game loop, causing Game.run to return.
   void stop() {
     _stopped = true;
   }
@@ -65,6 +84,7 @@ class Game {
     _display      = Display(settings.display);
 
     _events = al_create_event_queue();
+    _timer = al_create_timer(1.0 / settings.fps);
 
     al_register_event_source(_events, al_get_keyboard_event_source());
     al_register_event_source(_events, al_get_mouse_event_source());
@@ -72,7 +92,6 @@ class Game {
     al_register_event_source(_events, al_get_joystick_event_source());
 
     // start fps timer
-    _timer = al_create_timer(1.0 / settings.fps);
     al_start_timer(_timer);
 
     _stateStack.push(firstState);
