@@ -5,23 +5,22 @@ import std.conv;
 import std.range;
 import std.algorithm;
 import dau.allegro;
-import dau.setup;
 import dau.geometry;
 import dau.graphics.color;
 
-enum fileFormat = Paths.fontDir ~ "/%s.ttf"; // TODO: support other formats
+//enum fileFormat = Paths.fontDir ~ "/%s.ttf"; // TODO: support other formats
 
 /// TODO: should I use std.ascii.newline instead of '\n'?
 /// Wrapper around ALLEGRO_FONT
 struct Font {
   this(string name, int size) {
-    if (name !in _fontStore || size !in _fontStore[name]) {
-      auto file = fileFormat.format(name);
-      auto font = al_load_font(file.toStringz, size, 0); // 0 for flags
-      assert(font !is null, "could not load font " ~ name ~ " from " ~ file);
-      _fontStore[name][size] = font;
-    }
-    _font = _fontStore[name][size];
+    //if (name !in _fontStore || size !in _fontStore[name]) {
+    //  auto file = fileFormat.format(name);
+    //  auto font = al_load_font(file.toStringz, size, 0); // 0 for flags
+    //  assert(font !is null, "could not load font " ~ name ~ " from " ~ file);
+    //  _fontStore[name][size] = font;
+    //}
+    //_font = _fontStore[name][size];
   }
 
   int heightOf(string text) {

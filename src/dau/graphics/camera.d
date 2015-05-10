@@ -1,6 +1,5 @@
 module dau.graphics.camera;
 
-import dau.setup;
 import dau.allegro;
 import dau.geometry;
 

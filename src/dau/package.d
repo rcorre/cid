@@ -1,8 +1,6 @@
 module dau;
 
 public import dau.allegro;
-public import dau.setup;
-public import dau.engine;
 public import dau.input;
 public import dau.game;
 public import dau.state;

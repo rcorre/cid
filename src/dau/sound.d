@@ -2,12 +2,8 @@ module dau.sound;
 
 import std.string, std.conv, std.file, std.path, std.typecons;
 import dau.allegro;
-import dau.setup;
 
-private enum {
-  fileFormat = Paths.soundDir ~ "/%s.ogg", // TODO: support other extensions
-}
-
+/*
 abstract class AudioSample {
   abstract void play();
   abstract void stop();
@@ -69,20 +65,16 @@ private:
 ALLEGRO_SAMPLE*[string] _samples;
 
 auto loadSample(string key) {
-  auto sample = _samples.get(key, null); // is it cached?
-  if (sample !is null) {
-    return sample;
-  }
-  // not cached -- load and cache for next time
-  auto path = fileFormat.format(key);
-  assert(path.exists, "sound file %s does not exist".format(path));
-  sample = al_load_sample(path.toStringz);
-  assert(sample !is null, "sound file %s exists but failed to load".format(path));
-  _samples[key] = sample;
-  return sample;
+  //auto sample = _samples.get(key, null); // is it cached?
+  //if (sample !is null) {
+  //  return sample;
+  //}
+  //// not cached -- load and cache for next time
+  //auto path = fileFormat.format(key);
+  //assert(path.exists, "sound file %s does not exist".format(path));
+  //sample = al_load_sample(path.toStringz);
+  //assert(sample !is null, "sound file %s exists but failed to load".format(path));
+  //_samples[key] = sample;
+  //return sample;
 }
-
-static this() {
-  //onInit({ preloadSoundSamples(); });
-  //onShutdown({ unloadSamples(); });
-}
+*/

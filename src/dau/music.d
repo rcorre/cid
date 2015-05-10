@@ -1,11 +1,10 @@
 module dau.music;
 
 import std.path, std.string;
-import dau.setup;
 import dau.allegro;
 
+/*
 private enum {
-  trackFormat = Paths.musicDir ~ "/%s.ogg",
   bufferCount = 4,
   sampleCount = 2048
 }
@@ -45,7 +44,4 @@ void stopCurrentMusicTrack() {
 }
 
 private ALLEGRO_AUDIO_STREAM* _stream;
-
-static this() {
-  onShutdown({ stopCurrentMusicTrack(); });
-}
+*/

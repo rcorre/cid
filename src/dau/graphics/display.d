@@ -12,17 +12,29 @@ struct Display {
   struct Settings {
     mixin JsonizeMe;
     @jsonize {
-      Vector2i displaySize; /// size of the game window
-      Vector2i canvasSize;  /// size of the backbuffer upon which graphics are rendered
-      bool     vsync;       /// whether to enable vsync
-      Color    bgColor;
+      Vector2i displaySize; /// Size of the game window
+      Vector2i canvasSize;  /// Size of the backbuffer upon which graphics are rendered
+      Color    color;       /// Color used to clear screen
     }
   }
 
   private {
-    ALLEGRO_DISPLAY*  _display;
+    Color             _color;
     Vector2i          _canvasSize;
+    ALLEGRO_DISPLAY*  _display;
     ALLEGRO_TRANSFORM _transform;
+  }
+
+  @disable this();
+
+  this(Settings settings) {
+    _display = al_create_display(settings.displaySize.x, settings.displaySize.y);
+    _canvasSize = settings.canvasSize;
+
+    with(ALLEGRO_BLEND_MODE) {
+      al_set_blender(ALLEGRO_BLEND_OPERATIONS.ALLEGRO_ADD, ALLEGRO_ALPHA,
+          ALLEGRO_INVERSE_ALPHA);
+    }
   }
 
   @property {
@@ -68,13 +80,16 @@ struct Display {
 
       return Range(al_get_num_display_modes);
     }
+
+    auto ref color() { return _color; }
   }
 
-  @disable this();
+  void clear() {
+    al_clear_to_color(_color);
+  }
 
-  this(Settings settings) {
-    _display = al_create_display(settings.displaySize.x, settings.displaySize.y);
-    _canvasSize = settings.canvasSize;
+  void flip() {
+    al_flip_display();
   }
 
   private:

@@ -1,7 +1,6 @@
 module dau.input;
 
 import std.algorithm : max, min, any;
-import dau.setup;
 import dau.allegro;
 import dau.geometry.vector;
 
@@ -18,7 +17,7 @@ class InputManager {
     al_get_mouse_state(&_curMouseState);
   }
 
-  void update(float time) {
+  void update() {
     _prevKeyboardState = _curKeyboardState;
     _prevMouseState = _curMouseState;
     al_get_keyboard_state(&_curKeyboardState);
