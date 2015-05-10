@@ -1,28 +1,17 @@
-module dau.graphics.texture;
+/**
+ * A component used to draw sub-regions of a bitmap
+ */
+module dau.graphics.sprite;
 
-import std.string, std.conv, std.algorithm, std.file, std.path;
-import jsonizer;
-import dau.allegro;
 import dau.geometry;
 import dau.graphics.color;
 
 /*
-class Texture {
-  enum Flip {
-    none = 0,
-    horizontal = ALLEGRO_FLIP_HORIZONTAL,
-    vertical = ALLEGRO_FLIP_VERTICAL,
-    both = horizontal | vertical
-  }
+class Sprite {
   const int frameWidth, frameHeight;
   const int defaultDepth;
-  const float frameTime;
   const string name;
   @property {
-    /// width of entire bitmap
-    int width() { return al_get_bitmap_width(_bmp); }
-    /// height of entire bitmap
-    int height() { return al_get_bitmap_height(_bmp); }
     /// number of frame columns in the texture
     int numRows() { return height / frameHeight; }
     /// number of frame rows in the texture
@@ -54,16 +43,6 @@ class Texture {
         angle, flip);                             // rotation and flats
   }
 
-  void draw(Vector2i pos, Vector2f scale = Vector2f(1, 1), Color tint = Color.white,
-      float angle = 0, Flip flip = Flip.none)
-  {
-    al_draw_tinted_scaled_rotated_bitmap(_bmp, // bitmap
-        tint,                                  // color
-        frameCenter.x, frameCenter.y,          // frame center position
-        pos.x, pos.y,                          // position to place center of frame at
-        scale.x, scale.y,                      // x and y scale
-        angle, flip);                          // rotation and flats
-  }
 
   void draw(Vector2i pos, int row = 0, int col = 0, Vector2f scale = Vector2f(1, 1),
       Color tint = Color.white, float angle = 0, Flip flip = Flip.none)
