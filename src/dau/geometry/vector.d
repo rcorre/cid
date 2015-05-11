@@ -140,13 +140,13 @@ struct Vector2(T : real) {
   }
 
   // + or -
-  auto opBinary(string op, V)(Vector2!(V) rhs) if (op == "-" || op == "+") {
+  auto opBinary(string op, V)(Vector2!V rhs) if (op == "-" || op == "+" || op == "/" || op == "*") {
     alias U = typeof(mixin("x" ~ op ~ "rhs.x")); // return type
     mixin("return Vector2!U(x" ~op~ "rhs.x, y" ~op~ "rhs.y);");
   }
 
   // * or /
-  auto opBinary(string op, V)(V rhs) if (op == "*" || op == "/") {
+  auto opBinary(string op, V : real)(V rhs) if (op == "*" || op == "/") {
     alias U = typeof(mixin("x" ~ op ~ "rhs")); // return type
     return Vector2!U(mixin("x" ~op~ "rhs"), mixin("y" ~op~ "rhs"));
   }
@@ -345,4 +345,9 @@ unittest {
   assert(parseVector!int("1,2") == Vector2i(1,2));
   assert(parseVector!float("1,2") == Vector2f(1,2));
   assert(parseVector!real("-1.75, 20.4") == Vector2!real(-1.75, 20.4));
+}
+
+/// Vector * Vector, Vector / Vector
+unittest {
+  assert(Vector2i(10, 4) / Vector2i(5, 4) == Vector2i(2, 1));
 }
