@@ -12,35 +12,27 @@ class SpriteBatch {
     _sprites = new SpriteStore;
   }
 
-  void draw(T)(Bitmap bmp, Transform!T trans, Rect2 region, int depth = 0) {
+  void draw(T)(Bitmap bmp, Transform!T trans, Rect2i region, int depth = 0) {
     Entry entry;
     entry.bmp = bmp;
     entry.region = region;
-    entry.tranform = trans;
+    entry.transform = trans;
     entry.depth = depth;
     _sprites.insert(entry);
   }
 
-  void render(Camera camera) {
-    // use camera transform, store previous transform
-    ALLEGRO_TRANSFORM origTrans, baseTrans, entryTrans;
-    /* TODO: needed?
-    int x, y, w, h; // prev clipping rect
-    al_get_clipping_rectangle(&x, &y, &w, &h);
-    */
+  void render() {
+    ALLEGRO_TRANSFORM origTrans, curTrans;
     al_copy_transform(&origTrans, al_get_current_transform());
-    al_copy_transform(&baseTrans, &origTrans); // start with the current transform
-    al_compose_transform(&baseTrans, camera.transform); // compose with the camera transform
 
     foreach(entry ; _sprites) {
-      al_copy_transform(&entryTrans, &baseTrans);
-      al_compose_transform(&entryTrans, entry.transform.transform);
-      al_use_transform(&entryTrans);
+      al_copy_transform(&curTrans, &origTrans);
+      al_compose_transform(&curTrans, entry.transform.transform);
+      al_use_transform(&curTrans);
       entry.bmp.drawRegion(entry.region);
     }
 
     al_use_transform(&origTrans); // restore old transform
-    //al_set_clipping_rectangle(x, y, w, h); TODO: needed?
     _sprites.clear();
   }
 
