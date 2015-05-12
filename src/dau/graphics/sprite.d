@@ -5,9 +5,19 @@ module dau.graphics.sprite;
 
 import dau.geometry;
 import dau.graphics.color;
+import dau.graphics.bitmap;
+
+struct Sprite {
+  Bitmap           bmp;
+  Rect2i           region;
+  Transform!float  transform;
+  int              depth;
+  Bitmap.Flip      flip;
+  Color            color = Color.white;
+}
 
 /*
-class Sprite {
+struct Sprite {
   const int frameWidth, frameHeight;
   const int defaultDepth;
   const string name;

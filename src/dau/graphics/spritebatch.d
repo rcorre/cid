@@ -4,7 +4,7 @@ import std.container : RedBlackTree;
 import dau.allegro;
 import dau.geometry;
 import dau.graphics.camera;
-import dau.graphics.bitmap;
+import dau.graphics.sprite;
 
 // TODO: group textures and use al_hold_bitmap_drawing
 class SpriteBatch {
@@ -12,24 +12,19 @@ class SpriteBatch {
     _sprites = new SpriteStore;
   }
 
-  void draw(T)(Bitmap bmp, Transform!T trans, Rect2i region, int depth = 0) {
-    Entry entry;
-    entry.bmp = bmp;
-    entry.region = region;
-    entry.transform = trans;
-    entry.depth = depth;
-    _sprites.insert(entry);
+  void draw(T)(Sprite sprite) {
+    _sprites.insert(sprite);
   }
 
   void render() {
     ALLEGRO_TRANSFORM origTrans, curTrans;
     al_copy_transform(&origTrans, al_get_current_transform());
 
-    foreach(entry ; _sprites) {
+    foreach(sprite ; _sprites) {
       al_copy_transform(&curTrans, &origTrans);
-      al_compose_transform(&curTrans, entry.transform.transform);
+      al_compose_transform(&curTrans, sprite.transform.transform);
       al_use_transform(&curTrans);
-      entry.bmp.drawRegion(entry.region);
+      sprite.bmp.drawRegion(sprite.region, sprite.color, sprite.flip);
     }
 
     al_use_transform(&origTrans); // restore old transform
@@ -37,14 +32,8 @@ class SpriteBatch {
   }
 
   private:
-  struct Entry {
-    Bitmap bmp;
-    Rect2i region;
-    Transform!float transform;
-    int depth;
-  }
 
   // true indicates: allow duplicates
-  alias SpriteStore = RedBlackTree!(Entry, (a,b) => a.depth < b.depth, true);
+  alias SpriteStore = RedBlackTree!(Sprite, (a,b) => a.depth < b.depth, true);
   SpriteStore _sprites;
 }
