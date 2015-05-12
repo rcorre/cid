@@ -7,12 +7,11 @@
   */
 module dau.game;
 
-import std.algorithm;
+import std.path : buildPath;
 import dau.allegro;
 import dau.state;
 import dau.input;
-import dau.system;
-import dau.gui.manager;
+import dau.util.content;
 import dau.graphics;
 
 /// Main game class.
@@ -23,6 +22,31 @@ class Game {
     int numAudioSamples; /// Number of audio samples that can play at once
 
     Display.Settings display; /// Game window and backbuffer configuration
+    Content.Settings content; /// Content access configuration
+  }
+
+  /// Groups together various forms of game content that can be cached after loading.
+  struct Content {
+    struct Settings {
+      string dir;
+      string bitmapDir;
+      string[] bitmapExt = ["png", "jpg"];
+    }
+
+    private {
+      alias BitmapCache = ContentCache!(Bitmap, Bitmap.load);
+      BitmapCache _bitmaps;
+    }
+
+    @property {
+      auto bitmaps() { return _bitmaps; }
+    }
+
+    @disable this();
+
+    this(Settings settings) {
+      _bitmaps = BitmapCache(buildPath(settings.dir, settings.bitmapDir), settings.bitmapExt);
+    }
   }
 
   @property {
@@ -36,6 +60,8 @@ class Game {
     auto spriteBatch() { return _spriteBatch; }
     /// Seconds elapsed between the current frame and the previous frame.
     auto deltaTime() { return _deltaTime; }
+    /// Access cached content.
+    auto content() { return _content; }
   }
 
   /**
@@ -75,6 +101,7 @@ class Game {
   StateStack!Game _stateStack;
   InputManager    _inputManager;
   SpriteBatch     _spriteBatch;
+  Content         _content;
   Display         _display;
   float           _deltaTime;
   bool            _stopped;
@@ -85,6 +112,7 @@ class Game {
     _inputManager = new InputManager;
     _stateStack   = new StateStack!Game(this);
     _spriteBatch  = new SpriteBatch;
+    _content      = Content(settings.content);
     _display      = Display(settings.display);
 
     _events = al_create_event_queue();
