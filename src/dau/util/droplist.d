@@ -87,6 +87,10 @@ unittest {
 
   auto list = new DropList!(Foo, x => !x.active);
 
+  foreach(el ; list) {
+    assert(0, "new list should be empty");
+  }
+
   list.insert(new Foo(1, false));
   list.insert(new Foo(2, true));
   list.insert(new Foo(3, true));
