@@ -13,6 +13,7 @@ import dau.state;
 import dau.input;
 import dau.util.content;
 import dau.graphics;
+import dau.ecs;
 
 /// Main game class.
 class Game {
@@ -62,6 +63,8 @@ class Game {
     auto deltaTime() { return _deltaTime; }
     /// Access cached content.
     auto content() { return _content; }
+    /// Manages all entities and components
+    auto world() { return _world; }
   }
 
   /**
@@ -101,6 +104,7 @@ class Game {
   StateStack!Game _stateStack;
   InputManager    _inputManager;
   SpriteBatch     _spriteBatch;
+  World           _world;
   Content         _content;
   Display         _display;
   float           _deltaTime;
