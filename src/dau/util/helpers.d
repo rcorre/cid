@@ -130,7 +130,7 @@ private struct SelectRange(T...) if (allSatisfy!(isInputRange, T)) {
  *  index = index of range to pick
  *  ranges = ranges of possibly different types
  */
-SelectRange!T selectRange(T...)(size_t index, T ranges) {
+SelectRange!T selectRange(T...)(size_t index, lazy T ranges) {
   final switch(index) foreach (i, R; T) {
     case i:
       return SelectRange!T(ranges[i]);
