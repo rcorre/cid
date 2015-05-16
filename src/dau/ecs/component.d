@@ -28,37 +28,6 @@ abstract class Component {
 
   void deactivate() {
     _active = false;
-    _owner._components[baseComponentType(this)] = null;
+    _owner._components[typeid(this)] = null;
   }
-}
-
-package:
-// runtime component base type
-TypeInfo baseComponentType(Component c) {
-  auto type = c.classinfo;
-  assert(type != typeid(Component),  "Component type must be a subclass of Component");
-  while(type.base != typeid(Component)) {
-    type = type.base;
-  }
-
-  return type;
-}
-
-version(unittest) {
-  import std.exception : assertThrown;
-
-  class A : Component { } // A
-  class B : Component { } // B
-  class C : A { }         // C -> A
-  class D : B { }         // D -> B
-  class E : D { }         // E -> D -> B
-}
-
-// baseComponentType
-unittest {
-  assert(baseComponentType(new A) == typeid(A));
-  assert(baseComponentType(new C) == typeid(A));
-  assert(baseComponentType(new B) == typeid(B));
-  assert(baseComponentType(new D) == typeid(B));
-  assert(baseComponentType(new E) == typeid(B));
 }

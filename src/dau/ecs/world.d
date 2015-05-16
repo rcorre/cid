@@ -5,7 +5,7 @@
 module dau.ecs.world;
 
 import std.range : take, takeNone;
-import std.algorithm : find;
+import std.algorithm : map, find;
 import dau.ecs.entity;
 import dau.ecs.system;
 import dau.ecs.component;
@@ -13,7 +13,7 @@ import dau.util.droplist;
 import dau.util.helpers : selectRange;
 
 /// Stores entities and components.
-struct World {
+class World {
   private {
     alias EntityList = DropList!(Entity, x => !x.active);
     alias ComponentList = DropList!(Component, x => !x.active);
@@ -25,13 +25,13 @@ struct World {
 
   package {
     void addComponent(Component comp) {
-      auto type = comp.baseComponentType;
-      auto list = type in _components;
-      if (list is null) {
+      auto type = typeid(comp);
+
+      if (type !in _components) {
         _components[type] = new ComponentList();
       }
 
-      list.insert(comp);
+      _components[type].insert(comp);
     }
   }
 
@@ -54,16 +54,17 @@ struct World {
      * Get all components of type T.
      */
     auto components(T)() {
-      return _components[baseComponentType!T][];
+      assert(typeid(T) in _components);
+      return _components[typeid(T)][].map!(x => cast(T) x);
     }
 
     /**
      * Get the system of type T. Throws if no such system.
      */
-    auto system(T)() {
+    T system(T)() {
       auto sys = _systems.find!(x => typeid(x) == typeid(T));
       assert(!sys.empty, "could not find system of type " ~ T.stringof);
-      return sys.front;
+      return cast(T) sys.front;
     }
   }
 
@@ -74,7 +75,7 @@ struct World {
    *  tag = optional tag that can be used to search for this entity.
    */
   Entity createEntity(string tag = null) {
-    auto entity = new Entity();
+    auto entity = new Entity(this);
 
     if (tag !in _entities) {
       _entities[tag] = new EntityList();
@@ -97,18 +98,24 @@ version(unittest) {
 
   class Position : Component {
     int x, y;
+    this(int x, int y) {
+      this.x = x;
+      this.y = y;
+    }
   }
 
-  abstract class Drawable : Component {
-    string color;
-  }
-
-  class Primitive : Drawable {
+  class Primitive : Component {
     string type;
+    this(string type) {
+      this.type = type;
+    }
   }
 
-  class Sprite : Drawable {
+  class Sprite : Component {
     string name;
+    this(string name) {
+      this.name = name;
+    }
   }
 }
 
@@ -137,4 +144,52 @@ unittest {
 
   auto notFound = world.findEntities("nope");
   assert(notFound.empty);
+}
+
+/// remove entities
+unittest {
+  import std.range : walkLength;
+
+  auto world = new World;
+  Entity[] tiles;
+
+  foreach(i ; 0..5) {
+    tiles ~= world.createEntity("tile");
+  }
+
+  assert(world.findEntities("tile").walkLength == 5);
+
+  tiles[2].deactivate();
+  assert(world.findEntities("tile").walkLength == 4);
+
+  tiles[0].deactivate();
+  tiles[4].deactivate();
+  assert(world.findEntities("tile").walkLength == 2);
+
+  tiles[1].deactivate();
+  tiles[3].deactivate();
+  assert(world.findEntities("tile").walkLength == 0);
+}
+
+/// ecs management
+unittest {
+  import std.algorithm : find, canFind;
+
+  auto world = new World;
+
+  // create entities, attach components
+  auto square = world.createEntity();
+  square.attach(new Position(5, 9));
+  square.attach(new Primitive("square"));
+
+  auto sprite = world.createEntity();
+  sprite.attach(new Position(2, 1));
+  sprite.attach(new Sprite("person"));
+
+  // validate components can be found
+  assert(world.components!Position.canFind(square.component!Position));
+  assert(world.components!Position.canFind(sprite.component!Position));
+
+  assert(world.components!Primitive.canFind(square.component!Primitive));
+  assert(world.components!Sprite.canFind(sprite.component!Sprite));
 }

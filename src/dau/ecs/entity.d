@@ -17,7 +17,7 @@ class Entity {
   }
 
   // for now, can only be constructed from World
-  package this() { }
+  package this(World world) { _world = world; }
 
   final {
     /**
@@ -30,11 +30,11 @@ class Entity {
      * Get an attached component of type T, or null if there is no attached component of that type.
      *
      * Params:
-     *  T = Type of component to attach. Must be a subclass of Component.
+     *  T = Type of component to get. Must be a subclass of Component.
      */
     @property T component(T : Component)() {
-      auto type = BaseComponentType!T;
-      return cast(T) _components[type];
+      static assert(!is(T == Component), "must specify a subclass of Component");
+      return cast(T) _components[typeid(T)];
     }
 
     /**
@@ -47,9 +47,9 @@ class Entity {
      *  comp = component to attach
      */
     void attach(Component comp) {
-      auto type = comp.baseComponentType;
+      auto type = typeid(comp);
       assert(comp._owner is null, "attaching component that already has an owner");
-      assert(_components[type] is null, "cannot attach two of same component type");
+      assert(type !in _components, "attaching duplicate component " ~ comp.toString);
       _components[type] = comp;
       comp._owner = this;
       _world.addComponent(comp);
