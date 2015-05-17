@@ -46,8 +46,7 @@ class World {
      *  tag = tag to search for. must be non-null, null-tagged entites are not searchable.
      */
     auto findEntities(string tag) {
-      int idx = (tag in _entities) ? 1 : 0;
-      return selectRange(idx, takeNone!(typeof(_entities[tag][])), _entities[tag][]);
+      return (tag in _entities) ? _entities[tag][] : EntityList.emptySlice;
     }
 
     /**
