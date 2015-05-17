@@ -1,39 +1,50 @@
-module dau.graphics.spritebatch;
+module dau.graphics.render;
 
 import std.container : RedBlackTree;
 import dau.allegro;
 import dau.geometry;
 import dau.graphics.camera;
-import dau.graphics.sprite;
+import dau.graphics.color;
+import dau.graphics.bitmap;
 
 // TODO: group textures and use al_hold_bitmap_drawing
-class SpriteBatch {
+class Renderer {
   this() {
-    _sprites = new SpriteStore;
+    _entries = new EntryStore;
   }
 
-  void draw(T)(Sprite sprite) {
-    _sprites.insert(sprite);
+  void draw(RenderInfo info) {
+    _entries.insert(info);
   }
 
   void render() {
     ALLEGRO_TRANSFORM origTrans, curTrans;
     al_copy_transform(&origTrans, al_get_current_transform());
 
-    foreach(sprite ; _sprites) {
+    foreach(entry ; _entries) {
       al_copy_transform(&curTrans, &origTrans);
-      al_compose_transform(&curTrans, sprite.transform.transform);
+      al_compose_transform(&curTrans, entry.transform.transform);
       al_use_transform(&curTrans);
-      sprite.bmp.drawRegion(sprite.region, sprite.color, sprite.flip);
+      entry.bmp.drawRegion(entry.region, entry.color, entry.flip);
     }
 
     al_use_transform(&origTrans); // restore old transform
-    _sprites.clear();
+    _entries.clear();
   }
 
   private:
 
   // true indicates: allow duplicates
-  alias SpriteStore = RedBlackTree!(Sprite, (a,b) => a.depth < b.depth, true);
-  SpriteStore _sprites;
+  alias EntryStore = RedBlackTree!(RenderInfo, (a,b) => a.depth < b.depth, true);
+  EntryStore _entries;
+}
+
+/// Encompasses information needed to render a bitmap to the screen
+struct RenderInfo {
+  Bitmap           bmp;
+  Rect2i           region;
+  Transform!float  transform;
+  int              depth;
+  Bitmap.Flip      flip;
+  Color            color = Color.white;
 }

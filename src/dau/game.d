@@ -57,7 +57,7 @@ class Game {
     /// Recieve input events.
     auto input()     { return _inputManager; }
     /// Render bitmaps to the screen.
-    auto spriteBatch() { return _spriteBatch; }
+    auto renderer() { return _renderer; }
     /// Seconds elapsed between the current frame and the previous frame.
     auto deltaTime() { return _deltaTime; }
     /// Access cached content.
@@ -100,7 +100,7 @@ class Game {
   ALLEGRO_TIMER*  _timer;
   StateStack!Game _stateStack;
   InputManager    _inputManager;
-  SpriteBatch     _spriteBatch;
+  Renderer        _renderer;
   Content         _content;
   Display         _display;
   float           _deltaTime;
@@ -111,7 +111,7 @@ class Game {
   this(State!Game firstState, Settings settings) {
     _inputManager = new InputManager;
     _stateStack   = new StateStack!Game(this);
-    _spriteBatch  = new SpriteBatch;
+    _renderer     = new Renderer;
     _content      = Content(settings.content);
     _display      = Display(settings.display);
 
@@ -142,7 +142,7 @@ class Game {
 
   void draw() {
     display.clear();
-    spriteBatch.render();
+    renderer.render();
     display.flip();
   }
 
