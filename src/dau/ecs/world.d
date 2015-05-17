@@ -91,35 +91,10 @@ class World {
   }
 }
 
-version(unittest) {
-  import std.algorithm : equal, canFind;
-  import std.exception : assertThrown;
-
-  class Position : Component {
-    int x, y;
-    this(int x, int y) {
-      this.x = x;
-      this.y = y;
-    }
-  }
-
-  class Primitive : Component {
-    string type;
-    this(string type) {
-      this.type = type;
-    }
-  }
-
-  class Sprite : Component {
-    string name;
-    this(string name) {
-      this.name = name;
-    }
-  }
-}
-
 /// find entities by tags
 unittest {
+  import std.algorithm : canFind;
+
   auto world = new World;
 
   auto anon = world.createEntity();
@@ -173,6 +148,28 @@ unittest {
 /// ecs management
 unittest {
   import std.algorithm : find, canFind;
+
+  class Position : Component {
+    int x, y;
+    this(int x, int y) {
+      this.x = x;
+      this.y = y;
+    }
+  }
+
+  class Primitive : Component {
+    string type;
+    this(string type) {
+      this.type = type;
+    }
+  }
+
+  class Sprite : Component {
+    string name;
+    this(string name) {
+      this.name = name;
+    }
+  }
 
   auto world = new World;
 
