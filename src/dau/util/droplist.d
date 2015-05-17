@@ -19,7 +19,11 @@ class DropList(T, alias cond) if (is(typeof(cond(T.init)) == bool)) {
   }
 
   Range opSlice() {
-    return new Range(head);
+    return Range(this, head);
+  }
+
+  @property static Range emptySlice() {
+    return Range(null, null);
   }
 
   private:
@@ -45,35 +49,39 @@ class DropList(T, alias cond) if (is(typeof(cond(T.init)) == bool)) {
     }
   }
 
-  class Range {
-    Node node;
+  static struct Range {
+    private Node _node;
+    private DropList _list;
 
-    this(Node start) {
-      node = start;
+    this(DropList list, Node node) {
+      _list = list;
+      _node = node;
+
       stripNodes();
     }
 
     @property {
-      bool empty() { return node is null; }
-      T front() { return node.val; }
+      bool empty() { return _node is null; }
+      T front() { return _node.val; }
     }
 
     void popFront() {
-      node = node.next;
+      _node = _node.next;
       stripNodes();
     }
 
     /// remove nodes for which cond is true starting from node
     void stripNodes() {
-      while(node !is null && cond(node.val)) {
-        auto next = node.next;
-        removeNode(node);
-        node = next;
+      while(_node !is null && cond(_node.val)) {
+        auto next = _node.next;
+        _list.removeNode(_node);
+        _node = next;
       }
     }
   }
 }
 
+///
 unittest {
   class Foo {
     this(int val, bool active) {
@@ -117,4 +125,24 @@ unittest {
   foreach(el ; list) { // should never be entered
     assert(0, "vals should be empty");
   }
+}
+
+///
+unittest {
+  import std.range : walkLength;
+  assert(DropList!(int, x => x > 0).emptySlice.walkLength == 0);
+}
+
+// test range saving
+unittest {
+  import std.range : walkLength;
+
+  auto list = new DropList!(int, x => x < 0);
+  list.insert(1);
+  list.insert(2);
+  list.insert(3);
+
+  auto slice = list[];
+  assert(slice.walkLength == 3);
+  assert(slice.walkLength == 3);
 }
