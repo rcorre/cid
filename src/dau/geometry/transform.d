@@ -12,6 +12,17 @@ struct Transform(T) {
   Vector2!T.AngleType angle = 0;               /// rotation in radians
   private ALLEGRO_TRANSFORM _trans;
 
+  /** Construction **************************************************************/
+  this(U)(Vector2!U pos) {
+    this.pos = pos;
+  }
+
+  void opAssign(U)(Vector2!U pos) {
+    this.pos = pos;
+    this.scale = [1, 1];
+    this.angle = 0;
+  }
+
   /** Properties **************************************************************/
   @property {
     /// Get the matrix transformation based on the position, scale, angle
