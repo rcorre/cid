@@ -103,6 +103,8 @@ struct Display {
     }
 
     auto ref color() { return _color; }
+
+    auto display() { return _display; }
   }
 
   void clear() {
