@@ -62,7 +62,7 @@ class DropList(T, alias cond) if (is(typeof(cond(T.init)) == bool)) {
 
     @property {
       bool empty() { return _node is null; }
-      T front() { return _node.val; }
+      ref T front() { return _node.val; }
     }
 
     void popFront() {
@@ -141,4 +141,18 @@ unittest {
   auto slice = list[];
   assert(slice.walkLength == 3);
   assert(slice.walkLength == 3);
+}
+
+// ref access
+unittest {
+  import std.algorithm : equal;
+
+  auto list = new DropList!(int, x => x <= 0);
+  list.insert(1);
+  list.insert(2);
+  list.insert(3);
+
+  foreach (ref i ; list) i -= 1;
+
+  assert(list[].equal([2, 1]));
 }
