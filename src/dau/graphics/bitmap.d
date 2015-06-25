@@ -11,7 +11,9 @@ import dau.graphics.color;
  * Wrapper around an ALLEGRO_BITMAP*.
  */
 struct Bitmap {
-  private ALLEGRO_BITMAP *_bmp;
+  ALLEGRO_BITMAP *_bmp;
+
+  alias _bmp this;
 
   /// Flags that determine how bitmap is flipped while drawing
   enum Flip {
