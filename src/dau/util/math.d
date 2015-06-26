@@ -48,7 +48,9 @@ int roundDown(real val) {
 }
 
 /// linearly interpolate between start and end. factor is clamped between 0 (start) and 1 (end)
-T lerp(T, U : real)(T start, T end, U factor) {
+T lerp(T, U : real)(T start, T end, U factor)
+  if (is(typeof(cast(T) (start + (end - start) * factor))))
+{
   factor = clamp(factor, 0, 1);
   return cast(T) (start + (end - start) * factor);
 }
