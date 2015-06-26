@@ -29,9 +29,6 @@ struct Bitmap {
 
     /// Height of the bitmap in pixels.
     int height() { return al_get_bitmap_height(_bmp); }
-
-    /// Access the wrapped ALLEGRO_BITMAP struct
-    ALLEGRO_BITMAP* bitmap() { return _bmp; }
   }
 
   /**
