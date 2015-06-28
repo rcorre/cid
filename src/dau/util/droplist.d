@@ -1,8 +1,8 @@
 module dau.util.droplist;
 
-import std.container;
-import std.algorithm;
 import std.range;
+import std.traits : isImplicitlyConvertible;
+import std.algorithm;
 import std.container;
 
 /// list that automatically and efficiently removes entries for which cond(entry) is true
@@ -11,6 +11,14 @@ class DropList(T, alias cond) if (is(typeof(cond(T.init)) == bool)) {
     head = new Node(val, head);
     if (head.next !is null) {
       head.next.prev = head;
+    }
+  }
+
+  void insert(Stuff)(Stuff stuff)
+    if (isInputRange!Stuff && isImplicitlyConvertible!(ElementType!Stuff, T))
+  {
+    foreach(item ; stuff) {
+      insert(item);
     }
   }
 
@@ -127,6 +135,17 @@ unittest {
 unittest {
   import std.range : walkLength;
   assert(DropList!(int, x => x > 0).emptySlice.walkLength == 0);
+}
+
+/// range insertion
+unittest {
+  import std.range     : iota;
+  import std.algorithm : equal;
+
+  auto list = new DropList!(int, x => x > 5);
+  list.insert(iota(0, 10));
+
+  assert(list[].equal([5,4,3,2,1,0]));
 }
 
 // test range saving
