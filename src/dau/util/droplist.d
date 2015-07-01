@@ -22,6 +22,13 @@ class DropList(T, alias cond) if (is(typeof(cond(T.init)) == bool)) {
     }
   }
 
+  bool empty() {
+    // creating a slice will discard inactive elements,
+    // so empty will return true if the list is populated but contains all inactive elements
+    // NOTE: this means empty is not O(1)
+    return this[].empty;
+  }
+
   void clear() {
     head = null;
   }
@@ -174,4 +181,21 @@ unittest {
   foreach (ref i ; list) i -= 1;
 
   assert(list[].equal([2, 1]));
+}
+
+// empty property on container
+unittest {
+  auto list = new DropList!(int, x => x <= 0);
+  assert(list.empty);
+
+  list.insert(-1);
+  assert(list.empty); // -1 is immediately discarded
+
+  list.insert(-1);
+  list.insert(-2);
+  assert(list.empty); // both values are discarded
+
+  list.insert(1);
+  list.insert(-2);
+  assert(!list.empty);
 }
