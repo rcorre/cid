@@ -36,15 +36,31 @@ class StateStack(T) {
     bool empty() { return _stack.empty; }
   }
 
-  /// Place a new state on the state stack.
-  void push(State!T state) {
+  /**
+   * Place one or more new states on the state stack.
+   *
+   * When pushing multiple states, the states given last are placed on the bottom.
+   * The following:
+   * -----
+   * states.push(new StateA, new StateB, new StateC);
+   * -----
+   * is equivalent to:
+   * -----
+   * states.push(new StateC);
+   * states.push(new StateB);
+   * states.push(new StateA);
+   * -----
+   */
+  void push(State!T[] states ...) {
     if (_currentStateEntered) {
       current.exit(_obj);
       _currentStateEntered = false;
     }
 
-    _stack.insertFront(state);
-    state.start(_obj);
+    foreach_reverse(state ; states) {
+      _stack.insertFront(state);
+      state.start(_obj);
+    }
   }
 
   /// Remove the current state.
@@ -360,4 +376,17 @@ unittest {
   foo.check("C.enter", "C.run", "C.exit", "C.end");
   foo.states.run();
   foo.check("A.enter", "A.run");
+}
+
+// varargs push
+unittest {
+  auto foo = new Foo;
+
+  foo.states.push(new A, new B);
+  foo.states.run(); // B A
+  foo.check("B.start", "A.start", "A.enter", "A.run");
+  foo.states.pop(); // B xAx
+  foo.check("A.exit", "A.end");
+  foo.states.run(); // B
+  foo.check("B.enter", "B.run");
 }
