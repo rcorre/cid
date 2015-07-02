@@ -6,10 +6,13 @@ import dau.geometry.vector;
 
 /// Encompasses positional, rotational, and scale data.
 struct Transform(T) {
+  alias AngleType = Vector2!T.AngleType;
+
   /** Members *****************************************************************/
-  Vector2!T pos             = Vector2!T.zero;  /// position in space
-  Vector2!T scale           = Vector2!T(1, 1); /// x and y scaling
-  Vector2!T.AngleType angle = 0;               /// rotation in radians
+  Vector2!T pos   = Vector2!T.zero;  /// position in space
+  Vector2!T scale = Vector2!T(1, 1); /// x and y scaling
+  AngleType angle = 0;               /// rotation in radians
+
   private ALLEGRO_TRANSFORM _trans;
 
   /** Construction **************************************************************/
