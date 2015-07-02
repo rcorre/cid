@@ -30,7 +30,9 @@ struct Transform(T) {
   @property {
     /// Get the matrix transformation based on the position, scale, angle
     const(ALLEGRO_TRANSFORM*) transform() {
-      al_build_transform(&_trans, pos.x, pos.y, scale.x, scale.y, angle);
+      al_scale_transform(&_trans, scale.x, scale.y);
+      al_rotate_transform(&_trans, angle);
+      al_translate_transform(&_trans, pos.x, pos.y);
       return &_trans;
     }
   }
