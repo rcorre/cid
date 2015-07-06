@@ -23,8 +23,15 @@ class Renderer {
 
     foreach(entry ; _entries) {
       al_copy_transform(&curTrans, &origTrans);
+
+      if (entry.centered) {
+        al_translate_transform(&curTrans,
+            -entry.region.width / 2, -entry.region.height / 2);
+      }
+
       al_compose_transform(&curTrans, entry.transform.transform);
       al_use_transform(&curTrans);
+
       entry.bmp.drawRegion(entry.region, entry.color, entry.flip);
     }
 
@@ -47,4 +54,5 @@ struct RenderInfo {
   int              depth;
   Bitmap.Flip      flip;
   Color            color = Color.white;
+  bool             centered;
 }
