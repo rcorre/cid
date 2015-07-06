@@ -7,12 +7,20 @@
   */
 module dau.game;
 
-import std.path : buildPath;
+import std.file   : exists;
+import std.path   : buildNormalizedPath, setExtension;
+import std.format : format;
 import dau.allegro;
 import dau.state;
 import dau.input;
 import dau.util.content;
 import dau.graphics;
+
+private enum {
+  contentDir = "content",
+  bitmapDir  = "image",
+  bitmapExt  = ".png",
+}
 
 /// Main game class.
 class Game {
@@ -22,46 +30,21 @@ class Game {
     int numAudioSamples; /// Number of audio samples that can play at once
 
     Display.Settings display; /// Game window and backbuffer configuration
-    Content.Settings content; /// Content access configuration
-  }
-
-  /// Groups together various forms of game content that can be cached after loading.
-  struct Content {
-    struct Settings {
-      string dir;
-      string bitmapDir;
-      string[] bitmapExt = ["png", "jpg"];
-    }
-
-    private {
-      alias BitmapCache = ContentCache!(Bitmap, Bitmap.load);
-      BitmapCache _bitmaps;
-    }
-
-    @property {
-      auto bitmaps() { return _bitmaps; }
-    }
-
-    @disable this();
-
-    this(Settings settings) {
-      _bitmaps = BitmapCache(buildPath(settings.dir, settings.bitmapDir), settings.bitmapExt);
-    }
   }
 
   @property {
     /// Stack of states that manages game flow.
-    auto states()    { return _stateStack; }
+    auto states() { return _stateStack; }
     /// Access the game window and backbuffer.
-    auto display()   { return _display; }
+    auto display() { return _display; }
     /// Recieve input events.
-    auto input()     { return _inputManager; }
+    auto input() { return _inputManager; }
     /// Render bitmaps to the screen.
     auto renderer() { return _renderer; }
     /// Seconds elapsed between the current frame and the previous frame.
     auto deltaTime() { return _deltaTime; }
     /// Access cached content.
-    auto content() { return _content; }
+    auto bitmaps() { return _bitmaps; }
   }
 
   /**
@@ -97,22 +80,22 @@ class Game {
   }
 
   private:
+  ALLEGRO_EVENT_QUEUE* _events;
   ALLEGRO_TIMER*  _timer;
   StateStack!Game _stateStack;
   InputManager    _inputManager;
   Renderer        _renderer;
-  Content         _content;
   Display         _display;
   float           _deltaTime;
   bool            _stopped;
 
-  ALLEGRO_EVENT_QUEUE* _events;
+  // content
+  ContentCache!bitmapLoader _bitmaps;
 
   this(State!Game firstState, Settings settings) {
     _inputManager = new InputManager;
     _stateStack   = new StateStack!Game(this);
     _renderer     = new Renderer;
-    _content      = Content(settings.content);
     _display      = Display(settings.display);
 
     _events = al_create_event_queue();
@@ -164,4 +147,15 @@ class Game {
 
     return false;
   }
+}
+
+package:
+// TODO: private visibility, customizeable path
+auto bitmapLoader(string key) {
+  auto path = contentDir
+    .buildNormalizedPath(bitmapDir, key)
+    .setExtension(bitmapExt);
+
+  assert(path.exists, "could not find %s".format(path));
+  return Bitmap.load(path);
 }
