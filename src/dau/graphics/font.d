@@ -1,65 +1,77 @@
 module dau.graphics.font;
 
-import std.string;
-import std.conv;
-import std.range;
+import std.ascii  : newline;
+import std.range  : empty;
+import std.format : format;
+import std.string : toStringz, stripRight;
 import std.algorithm;
 import dau.allegro;
 import dau.geometry;
 import dau.graphics.color;
 
-//enum fileFormat = Paths.fontDir ~ "/%s.ttf"; // TODO: support other formats
+///
+alias Font = ALLEGRO_FONT*;
 
-/// TODO: should I use std.ascii.newline instead of '\n'?
-/// Wrapper around ALLEGRO_FONT
-struct Font {
-  this(string name, int size) {
-    //if (name !in _fontStore || size !in _fontStore[name]) {
-    //  auto file = fileFormat.format(name);
-    //  auto font = al_load_font(file.toStringz, size, 0); // 0 for flags
-    //  assert(font !is null, "could not load font " ~ name ~ " from " ~ file);
-    //  _fontStore[name][size] = font;
-    //}
-    //_font = _fontStore[name][size];
-  }
-
-  int heightOf(string text) {
-    auto lines = text.splitter('\n');
-    return al_get_font_line_height(_font) * (cast(int) lines.count("\n") + 1);
-  }
-
-  int widthOf(string text) {
-    auto lines = text.splitter('\n');
-    return reduce!((a, b) => a + al_get_text_width(_font, b.toStringz))(0, lines);
-  }
-
-  /// draw text at the given vector position in the given color
-  void draw(string text, Vector2i topLeft, Color color = Color.black) {
-    auto lines = text.splitter('\n');
-    foreach(line ; lines) {
-      al_draw_text(_font, color, topLeft.x, topLeft.y, 0, line.toStringz);
-      topLeft.y += al_get_font_line_height(_font);
-    }
-  }
-
-  /// return an array of text lines wrapped at the specified width (in pixels). Split text elements on whitespace
-  string[] wrapText(string text, int maxLineWidth) {
-    string currentLine;
-    string[] lines;
-    foreach(word ; filter!(s => !s.empty)(splitter(text))) {
-      if (widthOf(currentLine ~ word) > maxLineWidth) {
-        lines ~= stripRight(currentLine);
-        currentLine = word ~ " ";
-      }
-      else {
-        currentLine ~= (word ~ " ");
-      }
-    }
-    return lines ~ currentLine; // make sure to append last line
-  }
-
-  private:
-  ALLEGRO_FONT* _font;
+/**
+ * Load a font from a file.
+ *
+ * Params:
+ *  path = filesystem path to the font file
+ *  size = size to load the font with
+ */
+auto loadFont(string path, int size) {
+  auto font = al_load_font(path.toStringz, size, 0);
+  assert(font, "failed to load font %s size %d".format(path, size));
+  return font;
 }
 
-private ALLEGRO_FONT*[int][string] _fontStore; // indexed by [name][size]
+/**
+ * The height the given text would have when drawn with this font.
+ *
+ * Each newline adds another multiple of the line height.
+ */
+int heightOf(Font font, string text) {
+  return al_get_font_line_height(font) * (cast(int) text.count(newline) + 1);
+}
+
+/**
+ * The width the given text would have when drawn with this font.
+ *
+ * If the text contains newlines, returns the width of the longest line.
+ */
+int widthOf(Font font, string text) {
+  return text
+    .splitter(newline)                               // for each line
+    .map!(x => al_get_text_width(font, x.toStringz)) // get the drawing width
+    .reduce!max;                                     // choose the longest
+}
+
+/// draw text at the given vector position in the given color
+void draw(Font font, string text, Vector2i topLeft, Color color = Color.black) {
+  foreach(line ; text.splitter(newline)) {
+    al_draw_text(font, color, topLeft.x, topLeft.y, 0, line.toStringz);
+    topLeft.y += al_get_font_line_height(font);
+  }
+}
+
+/**
+ * Return an array of text lines wrapped at the specified width (in pixels).
+ * Text elements are split on whitespace.
+ *
+ * Similar to std.string.wrap, but with pixels instead of char counts.
+ */
+string[] wrapText(Font font, string text, int maxLineWidth) {
+  // TODO: nogc, return a range
+  string currentLine;
+  string[] lines;
+  foreach(word ; filter!(s => !s.empty)(splitter(text))) {
+    if (font.widthOf(currentLine ~ word) > maxLineWidth) {
+      lines ~= stripRight(currentLine);
+      currentLine = word ~ " ";
+    }
+    else {
+      currentLine ~= (word ~ " ");
+    }
+  }
+  return lines ~ currentLine; // make sure to append last line
+}

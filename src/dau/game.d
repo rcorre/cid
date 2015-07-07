@@ -18,8 +18,12 @@ import dau.graphics;
 
 private enum {
   contentDir = "content",
-  bitmapDir  = "image",
-  bitmapExt  = ".png",
+
+  bitmapDir = "image",
+  fontDir   = "font",
+
+  bitmapExt = ".png",
+  fontExt   = ".ttf",
 }
 
 /// Main game class.
@@ -158,4 +162,13 @@ auto bitmapLoader(string key) {
 
   assert(path.exists, "could not find %s".format(path));
   return Bitmap.load(path);
+}
+
+auto fontLoader(string key, int size) {
+  auto path = contentDir
+    .buildNormalizedPath(fontDir, key)
+    .setExtension(fontExt);
+
+  assert(path.exists, "could not find %s".format(path));
+  return loadFont(path, size);
 }
