@@ -177,7 +177,7 @@ struct Vector2(T : real) {
   }
 
   // == other vector, even if types differ
-  bool opEquals(V)(auto ref const Vector2!V rhs) {
+  bool opEquals(V)(auto ref const Vector2!V rhs) const {
     return x == rhs.x && y == rhs.y;
   }
 
