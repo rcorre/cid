@@ -57,7 +57,7 @@ class Renderer {
     Bitmap       bitmap;
     SList!Sprite sprites;
 
-    void draw(in ALLEGRO_TRANSFORM origTrans) {
+    void draw(ALLEGRO_TRANSFORM origTrans) {
       ALLEGRO_TRANSFORM curTrans;
 
       foreach(sprite ; sprites) {
