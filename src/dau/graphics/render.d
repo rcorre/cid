@@ -1,9 +1,9 @@
 module dau.graphics.render;
 
-import std.range     : only, isInputRange, ElementType;
+import std.range     : isInputRange, ElementType;
 import std.typecons  : Proxy;
 import std.typetuple : TypeTuple;
-import std.container : SList, RedBlackTree;
+import std.container : Array, RedBlackTree;
 import dau.allegro;
 import dau.geometry;
 import dau.graphics.font;
@@ -28,7 +28,7 @@ class Renderer {
 
     foreach(batch ; _batches) {
       al_hold_bitmap_drawing(true);
-      batch.draw(origTrans);
+      flipBatch(batch, origTrans);
       al_hold_bitmap_drawing(false);
     }
 
@@ -36,47 +36,31 @@ class Renderer {
     _batches.clear();
   }
 
-  void draw(Sprite sprite, Bitmap bmp, int depth = 0) {
-    draw(sprite.only, bmp, depth);
+  void draw(SpriteBatch batch) {
+    _batches.insert(batch);
   }
 
-  void draw(R)(R sprites, Bitmap bmp, int depth = 0)
-    if (isInputRange!R && is(ElementType!R == Sprite))
-  {
-    SpriteBatch sb;
+  private:
+  void flipBatch(SpriteBatch batch, ALLEGRO_TRANSFORM origTrans) {
+    ALLEGRO_TRANSFORM curTrans;
+    al_copy_transform(&curTrans, &origTrans);
 
-    sb.depth   = depth;
-    sb.bitmap  = bmp;
-    sb.sprites.insert(sprites);
+    foreach(sprite ; batch.sprites) {
+      // start with the original transform
+      al_copy_transform(&curTrans, &origTrans);
 
-    _batches.insert(sb);
-  }
-
-  struct SpriteBatch {
-    int          depth;
-    Bitmap       bitmap;
-    SList!Sprite sprites;
-
-    void draw(ALLEGRO_TRANSFORM origTrans) {
-      ALLEGRO_TRANSFORM curTrans;
-
-      foreach(sprite ; sprites) {
-        // start with the original transform
-        al_copy_transform(&curTrans, &origTrans);
-
-        if (sprite.centered) {
-          // translate by half the width and length to center the sprite
-          al_translate_transform(&curTrans,
-              -sprite.region.width / 2, -sprite.region.height / 2);
-        }
-
-        // compose with the transform for this individual sprite
-        al_compose_transform(&curTrans, sprite.transform.transform);
-
-        al_use_transform(&curTrans);
-
-        bitmap.drawRegion(sprite.region, sprite.color, sprite.flip);
+      if (sprite.centered) {
+        // translate by half the width and length to center the sprite
+        al_translate_transform(&curTrans,
+            -sprite.region.width / 2, -sprite.region.height / 2);
       }
+
+      // compose with the transform for this individual sprite
+      al_compose_transform(&curTrans, sprite.transform.transform);
+
+      al_use_transform(&curTrans);
+
+      batch.bitmap.drawRegion(sprite.region, sprite.color, sprite.flip);
     }
   }
 }
@@ -84,7 +68,45 @@ class Renderer {
 struct Sprite {
   Rect2i          region;
   bool            centered;
-  Color           color;
+  Color           color = Color.white;
   Bitmap.Flip     flip;
   Transform!float transform;
+}
+
+struct SpriteBatch {
+  Bitmap       bitmap;
+  int          depth;
+  Array!Sprite sprites;
+
+  /**
+   * Create a batch for drawing sprites with the same bitmap and depth.
+   *
+   * Params:
+   *  bitmap = bitmap to use as a sprite sheet
+   *  depth = sprite layer; more positive means 'higher'
+   */
+  this(Bitmap bitmap, int depth) {
+    this.bitmap = bitmap;
+    this.depth  = depth;
+  }
+
+  /**
+   * Insert a single sprite into the batch to be drawn this frame.
+   *
+   * Params:
+   *  sprite = sprite to draw with this batch's bitmap.
+   */
+  void opCatAssign(Sprite sprite) {
+    sprites.insert(sprite);
+  }
+
+  /**
+   * Insert a range of sprites into the batch to be drawn this frame.
+   *
+   * Params:
+   *  sprites = a range of sprites to draw with this batch's bitmap.
+   */
+  void opCatAssign(R)(R r) if (isInputRange!R && is(ElementType!R == Sprite)) {
+    sprites.insert(r);
+  }
 }
