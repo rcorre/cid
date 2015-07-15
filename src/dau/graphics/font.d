@@ -47,8 +47,10 @@ int widthOf(Font font, string text) {
 }
 
 /// draw text at the given vector position in the given color
-void draw(Font font, string text, Vector2i topLeft, Color color = Color.black) {
+void draw(Font font, string text, Color color = Color.black) {
+  auto topLeft = Vector2i.zero;
   foreach(line ; text.splitter(newline)) {
+    // TODO: use line.ptr instead of toStringz to avoid allocation?
     al_draw_text(font, color, topLeft.x, topLeft.y, 0, line.toStringz);
     topLeft.y += al_get_font_line_height(font);
   }
