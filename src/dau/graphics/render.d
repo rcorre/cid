@@ -131,7 +131,7 @@ struct SpriteBatch {
 
 struct Text {
   bool            centered;
-  Color           color = Color. white;
+  Color           color = Color.black;
   string          text;
   Transform!float transform;
 }
