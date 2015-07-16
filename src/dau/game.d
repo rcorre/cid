@@ -47,8 +47,10 @@ class Game {
     auto renderer() { return _renderer; }
     /// Seconds elapsed between the current frame and the previous frame.
     auto deltaTime() { return _deltaTime; }
-    /// Access cached content.
+    /// Retrieve bitmaps.
     auto bitmaps() { return _bitmaps; }
+    /// Retrieve fonts.
+    auto fonts() { return _fonts; }
   }
 
   /**
@@ -95,6 +97,7 @@ class Game {
 
   // content
   ContentCache!bitmapLoader _bitmaps;
+  ContentCache!fontLoader   _fonts;
 
   this(State!Game firstState, Settings settings) {
     _inputManager = new InputManager;
