@@ -9,14 +9,14 @@ module dau.state;
 import std.container : SList;
 
 /// Generic behavioral state
-class State(T) {
+interface State(T) {
   /// Called before run if this was not the last run state.
-  void enter(T object) { }
+  void enter(T object);
   /// Called once whenever the state becomes inactive (popped or new state pushed above).
   /// Only called if enter was previously called.
-  void exit(T object) { }
+  void exit(T object);
   /// Called every frame before drawing.
-  void run(T object) { }
+  void run(T object);
 }
 
 /// Manages a LIFO stack of states which determine how an instance of `T` behaves.
