@@ -1,29 +1,93 @@
 /**
  * Generic state stack implementation.
  *
- * StateStack is most notably used to manage the flow of Game logic.
- * However, a StateStack could be attached to anything that needs stateful behavior.
+ *
+ * Examples:
+ * A `StateStack` is useful for managing top-level game logic:
+ * ---
+ * class SettingsScreen : State!MyGame {
+ *   private MyGameSettings _settings;
+ *
+ *   override void enter(MyGame game) {
+ *     _settings = game.loadSettings();
+ *   }
+ *
+ *   override void exit(MyGame game) {
+ *     game.saveSettings(_settings);
+ *   }
+ *
+ *   override void run(MyGame game) {
+ *     // process player input to move through menu and adjust settings
+ *     // ...
+ *
+ *     // when the player exits the menu, just pop this state
+ *     if (clickedExitButton) {
+ *       game.states.pop();
+ *       // exit() will be called to save the settings
+ *     }
+ *   }
+ * }
+ *
+ * // inside your game class:
+ * class MyGame {
+ *   StateStack!MyGame states;
+ *
+ *   void update() {
+ *     states.run(this);
+ *     // ...
+ *   }
+ * }
+ *
+ * ---
+ *
+ * States can also be used to manage the logic of in-game entities.
+ * In this case, it may be useful to pass some context along.
+ * For this reason, states can take multiple arguments:
+ *
+ * ---
+ * class FollowPlayer : State!(Bird, GameWorld) {
+ *   override void enter(Bird bird, GameWorld world) { }
+ *   override void exit (Bird bird, GameWorld world) { }
+ *
+ *   override void run(Bird bird, GameWorld world) {
+ *     bird.moveTowards(world.player.pos, world.timeElapsed);
+ *   }
+ * }
+ *
+ * // inside your entity class:
+ * class Bird {
+ *   private StateStack!(Bird, GameWorld) _states;
+ *
+ *   void update(GameWorld world) {
+ *     _states.run(this, world);
+ *   }
+ * }
+ *
+ * ---
+ *
  */
 module dau.state;
 
 import std.container : SList;
 
-/// Generic behavioral state
-interface State(T) {
+/**
+ * Generic behavioral state.
+ */
+interface State(T...) {
   /// Called before `run` if this was not the previously run state.
-  void enter(T object);
+  void enter(T params);
 
-  /// Called once whenever the state becomes 'inactive'. 
+  /// Called once whenever the state becomes 'inactive'.
   /// A state becomes inactive if the state is popped or a new state is pushed.
   /// `exit` is only called if `enter` was previously called.
-  void exit(T object);
+  void exit(T params);
 
   /// Called continuously while this state is active.
-  void run(T object);
+  void run(T params);
 }
 
 /// Manages a LIFO stack of states which determine how an instance of `T` behaves.
-struct StateStack(T) {
+struct StateStack(T...) {
   @property {
     /// The state at the top of the stack.
     auto top() { return _stack.front; }
@@ -77,8 +141,23 @@ struct StateStack(T) {
     push(state);
   }
 
-  /// Call `run` on the active state.
-  void run(T obj) {
+  /**
+   * Step the state stack forward.
+   *
+   * If the `top` state has not been activated, this will call `enter` on it.
+   * If the `top` state's `enter` modifies the stack, `enter` will continue to be
+   * called on each new `top` state until a state remains on the stack after
+   * its `enter` call.
+   * Once the stack has 'stabilized', `run` will be called on the new `top`.
+   *
+   * Such multi-enter scenarios occur with 'transient' states -- states that
+   * perform something during `enter` and immediately pop themselves from the
+   * stack.
+   *
+   *
+   */
+  void run(T params) {
+    // cache obj for calls to exit() that are triggered by pop().
     _obj = obj;
 
     // top.enter() could push/pop, so keep going until the top state is entered
@@ -297,4 +376,31 @@ unittest {
   foo.check("A.exit");
   foo.states.run(foo); // B
   foo.check("B.enter", "B.run");
+}
+
+// multi-param states
+unittest {
+  class Thing { int y = 5; }
+
+  class World { int gravity = -1; }
+
+  class Fall : State!(Thing, World) {
+    override void enter(Thing thing, World world) { }
+    override void exit (Thing thing, World world) { }
+    override void run  (Thing thing, World world) {
+      thing.y += world.gravity;
+    }
+  }
+
+  World world = new World;
+  Thing thing = new Thing;
+  StateStack!(Thing, World) states;
+
+  states.push(new Fall);
+
+  states.run(thing, world);
+  assert(thing.y == 4);
+
+  states.run(thing, world);
+  assert(thing.y == 3);
 }
