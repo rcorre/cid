@@ -10,12 +10,15 @@ import std.container : SList;
 
 /// Generic behavioral state
 interface State(T) {
-  /// Called before run if this was not the last run state.
+  /// Called before `run` if this was not the previously run state.
   void enter(T object);
-  /// Called once whenever the state becomes inactive (popped or new state pushed above).
-  /// Only called if enter was previously called.
+
+  /// Called once whenever the state becomes 'inactive'. 
+  /// A state becomes inactive if the state is popped or a new state is pushed.
+  /// `exit` is only called if `enter` was previously called.
   void exit(T object);
-  /// Called every frame before drawing.
+
+  /// Called continuously while this state is active.
   void run(T object);
 }
 
