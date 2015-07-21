@@ -74,18 +74,6 @@ class StateStack(T) {
     state.end(_obj);
   }
 
-  /// Pop the current state, but assert that the current state is of the expected type.
-  ///
-  /// This is useful for validating that you are popping the state you expect you are popping
-  /// Params:
-  ///   Expected: Type of state you expect to pop from the top
-  void pop(Expected)() {
-    import std.format : format;
-    assert(typeid(current) == typeid(Expected),
-        "expected to pop state %s, but found %s".format(typeid(current), typeid(Expected)));
-    pop();
-  }
-
   /// Pop the current state (if there is a current state) and push a new state.
   void replace(State!T state) {
     if (!_stack.empty) {
