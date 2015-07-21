@@ -10,10 +10,6 @@ import std.container : SList;
 
 /// Generic behavioral state
 class State(T) {
-  /// Called only once before the state is first run.
-  void start(T object) { }
-  /// Called only once when the state is removed.
-  void end(T object) { }
   /// Called before run if this was not the last run state.
   void enter(T object) { }
   /// Called once whenever the state becomes inactive (popped or new state pushed above).
@@ -59,19 +55,18 @@ class StateStack(T) {
 
     foreach_reverse(state ; states) {
       _stack.insertFront(state);
-      state.start(_obj);
     }
   }
 
   /// Remove the current state.
   void pop() {
-    auto state = current; // get ref to current state, top may change during exit/end
+    // get ref to current state, top may change during exit
+    auto state = current; 
     _stack.removeFront;
     if (_currentStateEntered) {
       _currentStateEntered = false;
       state.exit(_obj);
     }
-    state.end(_obj);
   }
 
   /// Pop the current state (if there is a current state) and push a new state.
@@ -129,8 +124,6 @@ version (unittest) {
 
     class LoggingState : State!Foo {
       override {
-        void start (Foo foo) { foo.log ~= name ~ ".start"; }
-        void end   (Foo foo) { foo.log ~= name ~ ".end";   }
         void enter (Foo foo) { foo.log ~= name ~ ".enter"; }
         void exit  (Foo foo) { foo.log ~= name ~ ".exit";  }
         void run   (Foo foo) { foo.log ~= name ~ ".run";   }
@@ -169,7 +162,7 @@ unittest {
   auto foo = new Foo;
 
   foo.states.push(new A);
-  foo.check("A.start");
+  foo.check();
 
   foo.states.run();
   foo.check("A.enter", "A.run");
@@ -177,7 +170,7 @@ unittest {
   foo.check("A.run");
 
   foo.states.pop();
-  foo.check("A.exit", "A.end");
+  foo.check("A.exit");
 }
 
 // push multiple states
@@ -186,31 +179,12 @@ unittest {
 
   foo.states.push(new A);
   foo.states.run(); // A
-  foo.check("A.start", "A.enter", "A.run");
+  foo.check("A.enter", "A.run");
 
   foo.states.push(new B);
-  foo.check("A.exit", "B.start");
+  foo.check("A.exit");
   foo.states.run(); // A B
   foo.check("B.enter", "B.run");
-}
-
-// push state during start
-unittest {
-  class C : LoggingState {
-    override void start(Foo foo) { super.start(foo); foo.states.push(new A); }
-  }
-
-  auto foo = new Foo;
-
-  foo.states.push(new C);
-  foo.states.run();
-  // enter never runs, skipped during start
-  foo.check("C.start", "A.start", "A.enter", "A.run");
-  foo.states.pop();
-  foo.check("A.exit", "A.end");
-  // already started, won't start again
-  foo.states.run();
-  foo.check("C.enter", "C.run");
 }
 
 // push state during enter
@@ -223,11 +197,11 @@ unittest {
 
   foo.states.push(new C);
   foo.states.run();
-  foo.check("C.start", "C.enter", "C.exit", "A.start", "A.enter", "A.run");
+  foo.check("C.enter", "C.exit","A.enter", "A.run");
   foo.states.pop();
-  foo.check("A.exit", "A.end");
+  foo.check("A.exit");
   foo.states.run();
-  foo.check("C.enter", "C.exit", "A.start", "A.enter", "A.run");
+  foo.check("C.enter", "C.exit","A.enter", "A.run");
 }
 
 // push state during exit
@@ -240,27 +214,11 @@ unittest {
 
   foo.states.push(new C);
   foo.states.run();
-  foo.check("C.start", "C.enter", "C.run");
+  foo.check("C.enter", "C.run");
   foo.states.pop();
-  foo.check("C.exit", "A.start", "C.end");
+  foo.check("C.exit");
   foo.states.run();
   foo.check("A.enter", "A.run");
-}
-
-// push state during end
-unittest {
-  class C : LoggingState {
-    override void end(Foo foo) { super.end(foo); foo.states.push(new A); }
-  }
-
-  auto foo = new Foo;
-
-  foo.states.push(new C);
-  foo.states.run();
-  foo.check("C.start", "C.enter", "C.run");
-  foo.states.pop();
-  foo.states.run();
-  foo.check("C.exit", "C.end", "A.start", "A.enter", "A.run");
 }
 
 // push state during run
@@ -273,24 +231,8 @@ unittest {
 
   foo.states.push(new C);
   foo.states.run();
-  foo.check("C.start", "C.enter", "C.run", "C.exit", "A.start");
+  foo.check("C.enter", "C.run", "C.exit");
   foo.states.run();
-  foo.check("A.enter", "A.run");
-}
-
-// pop state during start -- should skip enter
-unittest {
-  class C : LoggingState {
-    override void start(Foo foo) { super.start(foo); foo.states.pop(); }
-  }
-
-  auto foo = new Foo;
-
-  foo.states.push(new A);
-  foo.states.push(new C);
-  foo.check("A.start", "C.start", "C.end");
-  foo.states.run();
-  // enter is skipped, so don't run exit.
   foo.check("A.enter", "A.run");
 }
 
@@ -304,9 +246,9 @@ unittest {
 
   foo.states.push(new A);
   foo.states.push(new C);
-  foo.check("A.start", "C.start");
+  foo.check();
   foo.states.run();
-  foo.check("C.enter", "C.exit", "C.end", "A.enter", "A.run");
+  foo.check("C.enter", "C.exit","A.enter", "A.run");
 }
 
 // pop state during exit
@@ -320,33 +262,13 @@ unittest {
   foo.states.push(new A);
   foo.states.push(new B); // this will get popped when C exits
   foo.states.push(new C);
-  foo.check("A.start", "B.start", "C.start");
+  foo.check();
   foo.states.run();
   foo.check("C.enter", "C.run");
   foo.states.pop();
-  foo.check("C.exit", "B.end", "C.end"); // C pops B while it is ending
+  foo.check("C.exit"); // C pops B while it is exiting
   foo.states.run();
   foo.check("A.enter", "A.run"); // only A is left
-}
-
-// pop state during end
-unittest {
-  class C : LoggingState {
-    override void end(Foo foo) { super.end(foo); foo.states.pop(); }
-  }
-
-  auto foo = new Foo;
-
-  foo.states.push(new A);
-  foo.states.push(new B); // this will get popped when C ends
-  foo.states.push(new C);
-  foo.check("A.start", "B.start", "C.start");
-  foo.states.run();
-  foo.check("C.enter", "C.run");
-  foo.states.pop();
-  foo.check("C.exit", "C.end", "B.end"); // B was not entered, so no corresponding exit, just end
-  foo.states.run();
-  foo.check("A.enter", "A.run");
 }
 
 // pop state during run
@@ -359,9 +281,9 @@ unittest {
 
   foo.states.push(new A);
   foo.states.push(new C);
-  foo.check("A.start", "C.start");
+  foo.check();
   foo.states.run();
-  foo.check("C.enter", "C.run", "C.exit", "C.end");
+  foo.check("C.enter", "C.run", "C.exit");
   foo.states.run();
   foo.check("A.enter", "A.run");
 }
@@ -372,9 +294,9 @@ unittest {
 
   foo.states.push(new A, new B);
   foo.states.run(); // B A
-  foo.check("B.start", "A.start", "A.enter", "A.run");
+  foo.check("A.enter", "A.run");
   foo.states.pop(); // B xAx
-  foo.check("A.exit", "A.end");
+  foo.check("A.exit");
   foo.states.run(); // B
   foo.check("B.enter", "B.run");
 }
