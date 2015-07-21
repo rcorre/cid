@@ -101,7 +101,6 @@ class Game {
 
   this(State!Game firstState, Settings settings) {
     _inputManager = new InputManager;
-    _stateStack   = new StateStack!Game(this);
     _renderer     = new Renderer;
     _display      = Display(settings.display);
 
@@ -127,7 +126,7 @@ class Game {
     last_update_time   = current_time;
 
     _inputManager.update();
-    _stateStack.run();
+    _stateStack.run(this);
   }
 
   void draw() {

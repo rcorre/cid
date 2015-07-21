@@ -23,11 +23,7 @@ interface State(T) {
 }
 
 /// Manages a LIFO stack of states which determine how an instance of `T` behaves.
-class StateStack(T) {
-  this(T obj) {
-    _obj = obj;
-  }
-
+struct StateStack(T) {
   @property {
     /// The state at the top of the stack.
     auto top() { return _stack.front; }
@@ -82,7 +78,9 @@ class StateStack(T) {
   }
 
   /// Call `run` on the active state.
-  void run() {
+  void run(T obj) {
+    _obj = obj;
+
     // top.enter() could push/pop, so keep going until the top state is entered
     while (!_currentStateEntered) {
       _currentStateEntered = true;
@@ -114,10 +112,6 @@ version (unittest) {
     class Foo {
       string[] log;
       StateStack!Foo states;
-
-      this() {
-        states = new StateStack!Foo(this);
-      }
 
       void check(string[] entries ...) {
         import std.format : format;
@@ -168,9 +162,9 @@ unittest {
   foo.states.push(new A);
   foo.check();
 
-  foo.states.run();
+  foo.states.run(foo);
   foo.check("A.enter", "A.run");
-  foo.states.run();
+  foo.states.run(foo);
   foo.check("A.run");
 
   foo.states.pop();
@@ -182,12 +176,12 @@ unittest {
   auto foo = new Foo;
 
   foo.states.push(new A);
-  foo.states.run(); // A
+  foo.states.run(foo); // A
   foo.check("A.enter", "A.run");
 
   foo.states.push(new B);
   foo.check("A.exit");
-  foo.states.run(); // A B
+  foo.states.run(foo); // A B
   foo.check("B.enter", "B.run");
 }
 
@@ -200,11 +194,11 @@ unittest {
   auto foo = new Foo;
 
   foo.states.push(new C);
-  foo.states.run();
+  foo.states.run(foo);
   foo.check("C.enter", "C.exit","A.enter", "A.run");
   foo.states.pop();
   foo.check("A.exit");
-  foo.states.run();
+  foo.states.run(foo);
   foo.check("C.enter", "C.exit","A.enter", "A.run");
 }
 
@@ -217,11 +211,11 @@ unittest {
   auto foo = new Foo;
 
   foo.states.push(new C);
-  foo.states.run();
+  foo.states.run(foo);
   foo.check("C.enter", "C.run");
   foo.states.pop();
   foo.check("C.exit");
-  foo.states.run();
+  foo.states.run(foo);
   foo.check("A.enter", "A.run");
 }
 
@@ -234,9 +228,9 @@ unittest {
   auto foo = new Foo;
 
   foo.states.push(new C);
-  foo.states.run();
+  foo.states.run(foo);
   foo.check("C.enter", "C.run", "C.exit");
-  foo.states.run();
+  foo.states.run(foo);
   foo.check("A.enter", "A.run");
 }
 
@@ -251,7 +245,7 @@ unittest {
   foo.states.push(new A);
   foo.states.push(new C);
   foo.check();
-  foo.states.run();
+  foo.states.run(foo);
   foo.check("C.enter", "C.exit","A.enter", "A.run");
 }
 
@@ -267,11 +261,11 @@ unittest {
   foo.states.push(new B); // this will get popped when C exits
   foo.states.push(new C);
   foo.check();
-  foo.states.run();
+  foo.states.run(foo);
   foo.check("C.enter", "C.run");
   foo.states.pop();
   foo.check("C.exit"); // C pops B while it is exiting
-  foo.states.run();
+  foo.states.run(foo);
   foo.check("A.enter", "A.run"); // only A is left
 }
 
@@ -286,9 +280,9 @@ unittest {
   foo.states.push(new A);
   foo.states.push(new C);
   foo.check();
-  foo.states.run();
+  foo.states.run(foo);
   foo.check("C.enter", "C.run", "C.exit");
-  foo.states.run();
+  foo.states.run(foo);
   foo.check("A.enter", "A.run");
 }
 
@@ -297,10 +291,10 @@ unittest {
   auto foo = new Foo;
 
   foo.states.push(new A, new B);
-  foo.states.run(); // B A
+  foo.states.run(foo); // B A
   foo.check("A.enter", "A.run");
   foo.states.pop(); // B xAx
   foo.check("A.exit");
-  foo.states.run(); // B
+  foo.states.run(foo); // B
   foo.check("B.enter", "B.run");
 }
