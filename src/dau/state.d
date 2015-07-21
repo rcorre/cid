@@ -27,7 +27,8 @@ class StateStack(T) {
 
   @property {
     /// The state at the top of the stack.
-    auto current() { return _stack.front; }
+    auto top() { return _stack.front; }
+
     /// True if no states exist on the stack.
     bool empty() { return _stack.empty; }
   }
@@ -49,7 +50,7 @@ class StateStack(T) {
    */
   void push(State!T[] states ...) {
     if (_currentStateEntered) {
-      current.exit(_obj);
+      top.exit(_obj);
       _currentStateEntered = false;
     }
 
@@ -61,7 +62,7 @@ class StateStack(T) {
   /// Remove the current state.
   void pop() {
     // get ref to current state, top may change during exit
-    auto state = current; 
+    auto state = top;
     _stack.removeFront;
     if (_currentStateEntered) {
       _currentStateEntered = false;
@@ -69,7 +70,7 @@ class StateStack(T) {
     }
   }
 
-  /// Pop the current state (if there is a current state) and push a new state.
+  /// Pop the top state (if there is a top state) and push a new state.
   void replace(State!T state) {
     if (!_stack.empty) {
       pop();
@@ -79,13 +80,13 @@ class StateStack(T) {
 
   /// Call `run` on the active state.
   void run() {
-    // current.enter() could push pop states, so keep going until the current state is entered
+    // top.enter() could push/pop, so keep going until the top state is entered
     while (!_currentStateEntered) {
       _currentStateEntered = true;
-      current.enter(_obj);
+      top.enter(_obj);
     }
 
-    current.run(_obj);
+    top.run(_obj);
   }
 
   /// Return a string containing the name of each state on the stack, with the 'lowest' on the left.
