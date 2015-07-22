@@ -113,7 +113,7 @@ struct StateStack(T...) {
    */
   void push(State!T[] states ...) {
     if (_currentStateEntered) {
-      top.exit(_obj);
+      top.exit(_params);
       _currentStateEntered = false;
     }
 
@@ -129,7 +129,7 @@ struct StateStack(T...) {
     _stack.removeFront;
     if (_currentStateEntered) {
       _currentStateEntered = false;
-      state.exit(_obj);
+      state.exit(_params);
     }
   }
 
@@ -158,32 +158,21 @@ struct StateStack(T...) {
    */
   void run(T params) {
     // cache obj for calls to exit() that are triggered by pop().
-    _obj = obj;
+    _params = params;
 
     // top.enter() could push/pop, so keep going until the top state is entered
     while (!_currentStateEntered) {
       _currentStateEntered = true;
-      top.enter(_obj);
+      top.enter(params);
     }
 
-    top.run(_obj);
-  }
-
-  /// Return a string containing the name of each state on the stack, with the 'lowest' on the left.
-  ///
-  /// This is useful for debugging state.
-  string printout() {
-    import std.string : split, join;
-    import std.algorithm : map;
-
-    string getName(State!T state) { return state.classinfo.name.split(".")[$ - 1]; }
-    return _stack[].map!(state => getName(state)).join(" | ");
+    top.run(params);
   }
 
   private:
-  SList!(State!T) _stack;
-  bool _currentStateEntered;
-  T _obj;
+  SList!(State!T) _stack;    // stack of states
+  bool _currentStateEntered; // true if top state has been enter()ed
+  T _params;                 // cache params passed to run() for use by pop()
 }
 
 version (unittest) {
