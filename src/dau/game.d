@@ -12,7 +12,7 @@ import std.path   : buildNormalizedPath, setExtension;
 import std.format : format;
 import dau.allegro;
 import dau.state;
-import dau.input;
+import dau.events;
 import dau.util.content;
 import dau.graphics;
 
@@ -41,8 +41,8 @@ class Game {
     auto states() { return _stateStack; }
     /// Access the game window and backbuffer.
     auto display() { return _display; }
-    /// Recieve input events.
-    auto input() { return _inputManager; }
+    /// Access the event manager.
+    auto events() { return _events; }
     /// Render bitmaps to the screen.
     auto renderer() { return _renderer; }
     /// Seconds elapsed between the current frame and the previous frame.
@@ -66,12 +66,12 @@ class Game {
       auto game = new Game(firstState, settings);
 
       while(!game._stopped) {
-        bool frameTick = game.processEvents();
+        game._events.process();
 
-        if (frameTick) {
-          game.update();
-          game.draw();
-        }
+        //if (frameTick) {
+        //  game.update();
+        //  game.draw();
+        //}
       }
 
       return 0;
@@ -86,10 +86,9 @@ class Game {
   }
 
   private:
-  ALLEGRO_EVENT_QUEUE* _events;
   ALLEGRO_TIMER*  _timer;
   StateStack!Game _stateStack;
-  InputManager    _inputManager;
+  EventManager    _events;
   Renderer        _renderer;
   Display         _display;
   float           _deltaTime;
@@ -100,17 +99,11 @@ class Game {
   ContentCache!fontLoader   _fonts;
 
   this(State!Game firstState, Settings settings) {
-    _inputManager = new InputManager;
-    _renderer     = new Renderer;
-    _display      = Display(settings.display);
+    _events   = new EventManager;
+    _renderer = new Renderer;
+    _display  = Display(settings.display);
 
-    _events = al_create_event_queue();
     _timer = al_create_timer(1.0 / settings.fps);
-
-    al_register_event_source(_events, al_get_keyboard_event_source());
-    al_register_event_source(_events, al_get_mouse_event_source());
-    al_register_event_source(_events, al_get_timer_event_source(_timer));
-    al_register_event_source(_events, al_get_joystick_event_source());
 
     // start fps timer
     al_start_timer(_timer);
@@ -125,7 +118,7 @@ class Game {
     _deltaTime         = current_time - last_update_time;
     last_update_time   = current_time;
 
-    _inputManager.update();
+    _events.process();
     _stateStack.run(this);
   }
 
@@ -135,24 +128,6 @@ class Game {
     display.flip();
   }
 
-  bool processEvents() {
-    ALLEGRO_EVENT event;
-    al_wait_for_event(_events, &event);
-    switch(event.type) {
-      case ALLEGRO_EVENT_TIMER:
-        if (event.timer.source == _timer) return true;
-        break;
-      case ALLEGRO_EVENT_DISPLAY_CLOSE:
-        stop();
-        break;
-      case ALLEGRO_EVENT_DISPLAY_RESIZE:
-        //al_acknowledge_resize(mainDisplay);
-        break;
-      default:
-    }
-
-    return false;
-  }
 }
 
 package:
