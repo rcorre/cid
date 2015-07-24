@@ -5,6 +5,7 @@ import std.range  : empty;
 import std.format : format;
 import std.string : toStringz, stripRight;
 import std.algorithm;
+import std.exception;
 import dau.allegro;
 import dau.geometry;
 import dau.graphics.color;
@@ -43,7 +44,8 @@ int widthOf(Font font, string text) {
   return text
     .splitter(newline)                               // for each line
     .map!(x => al_get_text_width(font, x.toStringz)) // get the drawing width
-    .reduce!max;                                     // choose the longest
+    .reduce!max                                      // choose the longest
+    .ifThrown(0);                                    // return 0 if empty
 }
 
 /// draw text at the given vector position in the given color
