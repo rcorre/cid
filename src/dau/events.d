@@ -10,8 +10,6 @@ enum MouseButton : uint {
   rmb = 2
 }
 
-alias KeyCode = uint;
-
 class EventManager {
   this() {
     _handlers = new HandlerList();
@@ -64,19 +62,31 @@ class EventManager {
   }
 
   auto onKeyDown(EventAction action) {
-    auto handler = new KeyboardHandler(action, KeyboardHandler.Type.Press);
+    auto handler = new ButtonHandler(action, ALLEGRO_EVENT_KEY_DOWN);
     _handlers.insert(handler);
     return handler;
   }
 
   auto onKeyUp(EventAction action) {
-    auto handler = new KeyboardHandler(action, KeyboardHandler.Type.Release);
+    auto handler = new ButtonHandler(action, ALLEGRO_EVENT_KEY_UP);
     _handlers.insert(handler);
     return handler;
   }
 
   auto onKeyChar(EventAction action) {
-    auto handler = new KeyboardHandler(action, KeyboardHandler.Type.Char);
+    auto handler = new ButtonHandler(action, ALLEGRO_EVENT_KEY_CHAR);
+    _handlers.insert(handler);
+    return handler;
+  }
+
+  auto onButtonDown(EventAction action) {
+    auto handler = new ButtonHandler(action, ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN);
+    _handlers.insert(handler);
+    return handler;
+  }
+
+  auto onButtonUp(EventAction action) {
+    auto handler = new ButtonHandler(action, ALLEGRO_EVENT_JOYSTICK_BUTTON_UP);
     _handlers.insert(handler);
     return handler;
   }
@@ -135,28 +145,19 @@ class TimerHandler : EventHandler {
   }
 }
 
-class KeyboardHandler : EventHandler {
+class ButtonHandler : EventHandler {
   private {
-    enum Type {
-      Press,
-      Release,
-      Char
-    }
-
-    EventAction _action;
-    Type   _type;
+    EventAction        _action;
+    ALLEGRO_EVENT_TYPE _type;
   }
 
-  this(EventAction action, Type type) {
+  this(EventAction action, ALLEGRO_EVENT_TYPE type) {
     _action = action;
     _type   = type;
   }
 
   override bool matches(in ALLEGRO_EVENT ev) {
-    return
-      ev.type == ALLEGRO_EVENT_KEY_DOWN && _type == Type.Press   ||
-      ev.type == ALLEGRO_EVENT_KEY_UP   && _type == Type.Release ||
-      ev.type == ALLEGRO_EVENT_KEY_CHAR && _type == Type.Char;
+    return ev.type == _type;
   }
 
   override void handle(in ALLEGRO_EVENT ev) {
