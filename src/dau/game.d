@@ -65,14 +65,7 @@ class Game {
       allegroInitAll();
       auto game = new Game(firstState, settings);
 
-      while(!game._stopped) {
-        game._events.process();
-
-        //if (frameTick) {
-        //  game.update();
-        //  game.draw();
-        //}
-      }
+      game.run();
 
       return 0;
     }
@@ -86,13 +79,13 @@ class Game {
   }
 
   private:
-  ALLEGRO_TIMER*  _timer;
   StateStack!Game _stateStack;
   EventManager    _events;
   Renderer        _renderer;
   Display         _display;
   float           _deltaTime;
   bool            _stopped;
+  bool            _update;
 
   // content
   ContentCache!bitmapLoader _bitmaps;
@@ -103,31 +96,33 @@ class Game {
     _renderer = new Renderer;
     _display  = Display(settings.display);
 
-    _timer = al_create_timer(1.0 / settings.fps);
+    auto queueUpdate(in ALLEGRO_EVENT ev) { _update = true; }
 
-    // start fps timer
-    al_start_timer(_timer);
-
+    _events.every(1.0 / settings.fps, &queueUpdate);
     _stateStack.push(firstState);
   }
 
-  void update() {
-    static float last_update_time = 0;
+  void run() {
+    while(!_stopped) {
+      _events.process();
 
-    float current_time = al_get_time();
-    _deltaTime         = current_time - last_update_time;
-    last_update_time   = current_time;
+      if (_update) {
+        static float last_update_time = 0;
 
-    _events.process();
-    _stateStack.run(this);
+        float current_time = al_get_time();
+        _deltaTime         = current_time - last_update_time;
+        last_update_time   = current_time;
+
+        _stateStack.run(this);
+
+        display.clear();
+        renderer.render();
+        display.flip();
+
+        _update = false;
+      }
+    }
   }
-
-  void draw() {
-    display.clear();
-    renderer.render();
-    display.flip();
-  }
-
 }
 
 package:

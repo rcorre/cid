@@ -2,8 +2,8 @@ module dau.events;
 
 public import core.time;
 
-import std.algorithm;
 import dau.allegro;
+import dau.util.droplist;
 
 enum MouseButton : uint {
   lmb = 1,
@@ -14,6 +14,7 @@ alias KeyCode = uint;
 
 class EventManager {
   this() {
+    _handlers = new HandlerList();
     _queue = al_create_event_queue();
 
     al_register_event_source(_queue, al_get_keyboard_event_source());
@@ -34,74 +35,131 @@ class EventManager {
     while (!al_is_event_queue_empty(_queue)) {
       al_wait_for_event(_queue, &event);
 
-      switch (event.type) {
-        case ALLEGRO_EVENT_TIMER:
-          auto entry = event.timer.source in _timerEntries;
-          if (entry !is null) {
-            entry.action();
-            if (!entry.repeat) stopTimer(entry.timer);
-          }
-          break;
-          //case ALLEGRO_EVENT_DISPLAY_CLOSE:
-          //  stop();
-          //  break;
-          //case ALLEGRO_EVENT_DISPLAY_RESIZE:
-          //  //al_acknowledge_resize(mainDisplay);
-          //  break;
-        default:
+      foreach(handler ; _handlers) {
+        if (handler.matches(event)) handler.handle(event);
       }
     }
   }
 
-  auto trigger(void delegate() action) {
-    struct RegisterTrigger {
-      private EventManager _parent;
-      private void delegate() _action;
-
-      auto after(Duration dur) { return _parent.createTimer(dur, action, false); }
-      auto every(Duration dur) { return _parent.createTimer(dur, action, true); }
-    }
-
-    return RegisterTrigger(this);
+  auto after(float seconds, EventAction action) {
+    enum repeat = false;
+    auto handler = new TimerHandler(action, seconds, repeat, _queue);
+    _handlers.insert(handler);
+    return handler;
   }
 
-  auto stopTimer(Timer timer) {
-    assert(timer in _timerEntries, "Failed to find timer to stop");
+  auto after(Duration dur, EventAction action) {
+    return after(dur.total!"nsecs" / 1e9, action);
+  }
 
-    auto entry = _timerEntries[timer];
+  auto every(float seconds, EventAction action) {
+    enum repeat = true;
+    auto handler = new TimerHandler(action, seconds, repeat, _queue);
+    _handlers.insert(handler);
+    return handler;
+  }
 
-    al_unregister_event_source(_queue, al_get_timer_event_source(entry.timer));
-    al_destroy_timer(entry.timer);
+  auto every(Duration dur, EventAction action) {
+    return every(dur.total!"nsecs" / 1e9, action);
+  }
 
-    _timerEntries.remove(timer);
+  auto onKeyDown(EventAction action) {
+    auto handler = new KeyboardHandler(action, KeyboardHandler.Type.Press);
+    _handlers.insert(handler);
+    return handler;
+  }
+
+  auto onKeyUp(EventAction action) {
+    auto handler = new KeyboardHandler(action, KeyboardHandler.Type.Release);
+    _handlers.insert(handler);
+    return handler;
+  }
+
+  auto onKeyChar(EventAction action) {
+    auto handler = new KeyboardHandler(action, KeyboardHandler.Type.Char);
+    _handlers.insert(handler);
+    return handler;
   }
 
   private:
-  ALLEGRO_EVENT_QUEUE *_queue;
-  TimerEntry[Timer] _timerEntries;
+  alias HandlerList = DropList!(EventHandler, x => !x._active);
 
-  struct TimerEntry {
-    Timer           timer;
-    void delegate() action;
-    bool            repeat;
+  ALLEGRO_EVENT_QUEUE* _queue;
+  HandlerList          _handlers;
+}
+
+alias EventAction = void delegate(in ALLEGRO_EVENT);
+
+abstract class EventHandler {
+  private bool _active = true;
+
+  void unregister() { _active = false; }
+
+  bool matches(in ALLEGRO_EVENT ev);
+  void handle(in ALLEGRO_EVENT ev);
+}
+
+class TimerHandler : EventHandler {
+  private {
+    EventAction          _action;
+    bool                 _repeat;
+    ALLEGRO_EVENT_QUEUE* _queue;
+    ALLEGRO_TIMER*       _timer;
   }
 
-  private auto createTimer(Duration dur, void delegate() action, bool repeat) {
-    TimerEntry entry;
+  this(EventAction action, float secs, bool repeat, ALLEGRO_EVENT_QUEUE* queue) {
+    _action = action;
+    _repeat = repeat;
+    _queue  = queue;
+    _timer  = al_create_timer(secs);
 
-    auto timer = al_create_timer(dur.total!"seconds" / 1e9);
+    // register and start timer
+    al_register_event_source(_queue, al_get_timer_event_source(_timer));
+    al_start_timer(_timer);
+  }
 
-    entry.repeat = repeat;
-    entry.timer  = timer;
-    entry.action = action;
+  override void unregister() {
+    super.unregister();
 
-    _timerEntries[timer] = entry;
+    al_unregister_event_source(_queue, al_get_timer_event_source(_timer));
+    al_destroy_timer(_timer);
+  }
 
-    al_register_event_source(_queue, al_get_timer_event_source(timer));
-    al_start_timer(timer);
+  override bool matches(in ALLEGRO_EVENT ev) {
+    return ev.type == ALLEGRO_EVENT_TIMER && ev.timer.source == _timer;
+  }
 
-    return timer;
+  override void handle(in ALLEGRO_EVENT ev) {
+    _action(ev);
+    if (!_repeat) unregister();
   }
 }
 
-alias Timer = ALLEGRO_TIMER*;
+class KeyboardHandler : EventHandler {
+  private {
+    enum Type {
+      Press,
+      Release,
+      Char
+    }
+
+    EventAction _action;
+    Type   _type;
+  }
+
+  this(EventAction action, Type type) {
+    _action = action;
+    _type   = type;
+  }
+
+  override bool matches(in ALLEGRO_EVENT ev) {
+    return
+      ev.type == ALLEGRO_EVENT_KEY_DOWN && _type == Type.Press   ||
+      ev.type == ALLEGRO_EVENT_KEY_UP   && _type == Type.Release ||
+      ev.type == ALLEGRO_EVENT_KEY_CHAR && _type == Type.Char;
+  }
+
+  override void handle(in ALLEGRO_EVENT ev) {
+    _action(ev);
+  }
+}
