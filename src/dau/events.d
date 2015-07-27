@@ -91,6 +91,12 @@ class EventManager {
     return handler;
   }
 
+  auto onJoypadAxis(EventAction action) {
+    auto handler = new ButtonHandler(action, ALLEGRO_EVENT_JOYSTICK_AXIS);
+    _handlers.insert(handler);
+    return handler;
+  }
+
   private:
   alias HandlerList = DropList!(EventHandler, x => !x._active);
 
