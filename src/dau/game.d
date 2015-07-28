@@ -38,7 +38,7 @@ class Game {
 
   @property {
     /// Stack of states that manages game flow.
-    auto states() { return _stateStack; }
+    ref auto states() { return _stateStack; }
     /// Access the game window and backbuffer.
     auto display() { return _display; }
     /// Access the event manager.
