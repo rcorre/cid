@@ -96,9 +96,7 @@ class Game {
     _renderer = new Renderer;
     _display  = Display(settings.display);
 
-    auto queueUpdate(in ALLEGRO_EVENT ev) { _update = true; }
-
-    _events.every(1.0 / settings.fps, &queueUpdate);
+    _events.every(1.0 / settings.fps, { _update = true; });
     _stateStack.push(firstState);
   }
 
