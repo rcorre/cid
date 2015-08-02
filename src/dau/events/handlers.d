@@ -300,3 +300,112 @@ unittest {
   assert(!cancelHandler.check(keyUp  (ALLEGRO_KEY_ENTER)));
   assert( cancelHandler.check(keyUp  (ALLEGRO_KEY_ESCAPE)));
 }
+
+// test axis handling
+unittest {
+  enum {
+    xAxis     = 0,
+    yAxis     = 1,
+    goodStick = 1,
+    badStick  = 0,
+    badAxis   = 2,
+  }
+
+  AxisMap testAxis;
+
+  testAxis.keys[Direction.up]    = ALLEGRO_KEY_W;
+  testAxis.keys[Direction.down]  = ALLEGRO_KEY_S;
+  testAxis.keys[Direction.left]  = ALLEGRO_KEY_A;
+  testAxis.keys[Direction.right] = ALLEGRO_KEY_D;
+
+  testAxis.xAxis.stick = 1;
+  testAxis.xAxis.axis  = 0;
+
+  testAxis.yAxis.stick = 1;
+  testAxis.yAxis.axis  = 1;
+
+  Vector2f axisPos = Vector2f.zero;
+
+  bool check(Vector2f expected) {
+    bool ok = axisPos.approxEqual(expected);
+    axisPos = Vector2f.zero;
+    return ok;
+  }
+
+  auto moveHandler = new AxisHandler((pos) { axisPos = pos; }, testAxis);
+
+  auto keyDown(int key) {
+    ALLEGRO_EVENT ev;
+    ev.any.type = ALLEGRO_EVENT_KEY_DOWN;
+    ev.keyboard.keycode = key;
+    return ev;
+  }
+
+  auto keyUp(int key) {
+    ALLEGRO_EVENT ev;
+    ev.any.type = ALLEGRO_EVENT_KEY_UP;
+    ev.keyboard.keycode = key;
+    return ev;
+  }
+
+  auto moveAxis(int stick, int axis, float pos) {
+    ALLEGRO_EVENT ev;
+    ev.any.type       = ALLEGRO_EVENT_JOYSTICK_AXIS;
+    ev.joystick.stick = stick;
+    ev.joystick.axis  = axis;
+    ev.joystick.pos   = pos;
+    return ev;
+  }
+
+  // up
+  moveHandler.handle(keyDown(ALLEGRO_KEY_W));
+  assert(check(Vector2f(0, -1)));
+
+  // up+right
+  moveHandler.handle(keyDown(ALLEGRO_KEY_D));
+  assert(check(Vector2f(1, -1)));
+
+  // up+right+down (down+up should cancel)
+  moveHandler.handle(keyDown(ALLEGRO_KEY_S));
+  assert(check(Vector2f(1, 0)));
+
+  // down+right (released up)
+  moveHandler.handle(keyUp(ALLEGRO_KEY_W));
+  assert(check(Vector2f(1, 1)));
+
+  // down (released right)
+  moveHandler.handle(keyUp(ALLEGRO_KEY_D));
+  assert(check(Vector2f(0, 1)));
+
+  // everything released
+  moveHandler.handle(keyUp(ALLEGRO_KEY_S));
+  assert(check(Vector2f.zero));
+
+  // move the joystick x axis
+  moveHandler.handle(moveAxis(goodStick, xAxis, 0.5f));
+  assert(check(Vector2f(0.5f, 0)));
+
+  // move the joystick y axis
+  moveHandler.handle(moveAxis(goodStick, yAxis, 0.7f));
+  assert(check(Vector2f(0.5f, 0.7f)));
+
+  // move the joystick x axis in the other direction
+  moveHandler.handle(moveAxis(goodStick, xAxis, -0.2f));
+  assert(check(Vector2f(-0.2f, 0.7f)));
+
+  // move a different axis on the same stick (should have no effect)
+  moveHandler.handle(moveAxis(goodStick, badAxis, -0.9f));
+  assert(check(Vector2f.zero));
+
+  // move a different stick (should have no effect)
+  moveHandler.handle(moveAxis(badStick, xAxis, -0.9f));
+  assert(check(Vector2f.zero));
+
+  // move the joystick y axis to zero
+  moveHandler.handle(moveAxis(goodStick, yAxis, 0.0f));
+  assert(check(Vector2f(-0.2f, 0.0f)));
+
+  // move the joystick x axis to zero
+  moveHandler.handle(moveAxis(goodStick, xAxis, 0.0f));
+  assert(check(Vector2f(-0.0f, 0.0f)));
+}
