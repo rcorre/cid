@@ -179,3 +179,124 @@ bool isAxisMotion(in ALLEGRO_EVENT ev, AxisMap.SubAxis map) {
       ev.joystick.stick == map.stick &&
       ev.joystick.axis == map.axis);
 }
+
+unittest {
+  int runTest() {
+    al_init();
+
+    ALLEGRO_EVENT event_in, event_out;
+    ALLEGRO_EVENT_SOURCE source;
+
+    auto queue = al_create_event_queue();
+
+    al_init_user_event_source(&source);
+    al_register_event_source(queue, &source);
+
+    event_in.any.type         = ALLEGRO_EVENT_KEY_DOWN;
+    event_in.keyboard.keycode = ALLEGRO_KEY_ENTER;
+
+    al_emit_user_event(&source, &event_in, null);
+
+    al_wait_for_event(queue, &event_out);
+
+    assert(event_out.type == ALLEGRO_EVENT_KEY_DOWN);
+    assert(event_out.keyboard.keycode == ALLEGRO_KEY_ENTER);
+
+    al_destroy_event_queue(queue);
+    return 0;
+  }
+
+  int res = al_run_allegro(&runTest);
+  assert(res == 0);
+}
+
+// test button handling
+unittest {
+  class FakeHandler : ButtonHandler {
+    bool handled;
+
+    // handle the event, then return and reset the handled flag
+    bool check(in ALLEGRO_EVENT ev) {
+      super.handle(ev);
+      auto res = handled;
+      handled = false;
+      return res;
+    }
+
+    this(Type type, ButtonMap map) {
+      super({ handled = true; }, type, map);
+    }
+  }
+
+  ButtonMap confirmMap, cancelMap;
+
+  confirmMap.keys    = [ ALLEGRO_KEY_ENTER, ALLEGRO_KEY_J ];
+  confirmMap.buttons = [ 0, 2 ];
+
+  cancelMap.keys    = [ ALLEGRO_KEY_ESCAPE, ALLEGRO_KEY_K ];
+  cancelMap.buttons = [ 1 ];
+
+  auto confirmHandler = new FakeHandler(ButtonHandler.Type.press, confirmMap);
+  auto cancelHandler  = new FakeHandler(ButtonHandler.Type.release, cancelMap);
+
+  auto buttonDown(int button) {
+    ALLEGRO_EVENT ev;
+    ev.any.type = ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN;
+    ev.joystick.button = button;
+
+    return ev;
+  }
+
+  auto buttonUp(int button) {
+    ALLEGRO_EVENT ev;
+    ev.any.type = ALLEGRO_EVENT_JOYSTICK_BUTTON_UP;
+    ev.joystick.button = button;
+
+    return ev;
+  }
+
+  auto keyDown(int key) {
+    ALLEGRO_EVENT ev;
+    ev.any.type = ALLEGRO_EVENT_KEY_DOWN;
+    ev.keyboard.keycode = key;
+    return ev;
+  }
+
+  auto keyUp(int key) {
+    ALLEGRO_EVENT ev;
+    ev.any.type = ALLEGRO_EVENT_KEY_UP;
+    ev.keyboard.keycode = key;
+    return ev;
+  }
+
+  // confirm handler should respond to:
+  // - button presses, not releases
+  //   - joystick buttons 0 and 2
+  //   - keys enter and j
+  assert( confirmHandler.check(buttonDown(0)));
+  assert( confirmHandler.check(buttonDown(2)));
+  assert(!confirmHandler.check(buttonDown(1)));
+  assert(!confirmHandler.check(buttonUp  (0)));
+  assert(!confirmHandler.check(buttonUp  (2)));
+
+  assert( confirmHandler.check(keyDown(ALLEGRO_KEY_ENTER)));
+  assert( confirmHandler.check(keyDown(ALLEGRO_KEY_J)));
+  assert(!confirmHandler.check(keyDown(ALLEGRO_KEY_ESCAPE)));
+  assert(!confirmHandler.check(keyUp  (ALLEGRO_KEY_ENTER)));
+  assert(!confirmHandler.check(keyUp  (ALLEGRO_KEY_ESCAPE)));
+
+  // confirm handler should respond to:
+  // - button releases, not presses
+  //   - joystick button 1
+  //   - keys escape and k
+  assert(!cancelHandler.check(buttonDown(1)));
+  assert(!cancelHandler.check(buttonDown(0)));
+  assert( cancelHandler.check(buttonUp  (1)));
+  assert(!cancelHandler.check(buttonUp  (0)));
+
+  assert(!cancelHandler.check(keyDown(ALLEGRO_KEY_ESCAPE)));
+  assert(!cancelHandler.check(keyDown(ALLEGRO_KEY_K)));
+  assert(!cancelHandler.check(keyDown(ALLEGRO_KEY_ENTER)));
+  assert(!cancelHandler.check(keyUp  (ALLEGRO_KEY_ENTER)));
+  assert( cancelHandler.check(keyUp  (ALLEGRO_KEY_ESCAPE)));
+}
