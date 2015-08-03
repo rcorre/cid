@@ -13,7 +13,7 @@ alias AxisAction = void delegate(Vector2f axisPos);
 abstract class EventHandler {
   private bool _active = true;
 
-  @property bool active() { return active; }
+  @property bool active() { return _active; }
 
   void unregister() { _active = false; }
 

@@ -92,7 +92,7 @@ class EventManager {
   }
 
   auto onAxisMoved(string name, AxisAction action) {
-    assert(name in _controls.buttons, "unknown axis name " ~ name);
+    assert(name in _controls.axes, "unknown axis name " ~ name);
 
     auto handler = new AxisHandler(action, _controls.axes[name]);
     _handlers.insert(handler);
