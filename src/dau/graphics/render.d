@@ -27,11 +27,11 @@ class Renderer {
     ALLEGRO_TRANSFORM origTrans;
     al_copy_transform(&origTrans, al_get_current_transform());
 
+    al_hold_bitmap_drawing(true);
     foreach(batch ; _batches) {
-      al_hold_bitmap_drawing(true);
       batch.flip(origTrans);
-      al_hold_bitmap_drawing(false);
     }
+    al_hold_bitmap_drawing(false);
 
     al_use_transform(&origTrans); // restore old transform
     _batches.clear();
