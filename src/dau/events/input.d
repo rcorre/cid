@@ -24,13 +24,13 @@ struct ControlScheme {
 struct ButtonMap {
   mixin JsonizeMe;
 
-  int[] keys;
+  KeyCode[] keys;
   int[] buttons;
 
   @jsonize
   this(string[] keys, int[] buttons) {
     this.buttons = buttons;
-    this.keys = keys.map!(x => x.toLower.to!KeyCode.to!int).array;
+    this.keys = keys.map!(x => x.toLower.to!KeyCode).array;
   }
 }
 

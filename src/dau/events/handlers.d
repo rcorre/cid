@@ -214,6 +214,8 @@ unittest {
 
 // test button handling
 unittest {
+  import dau.events.keycodes;
+
   class FakeHandler : ButtonHandler {
     bool handled;
 
@@ -232,10 +234,10 @@ unittest {
 
   ButtonMap confirmMap, cancelMap;
 
-  confirmMap.keys    = [ ALLEGRO_KEY_ENTER, ALLEGRO_KEY_J ];
+  confirmMap.keys    = [ KeyCode.enter, KeyCode.j ];
   confirmMap.buttons = [ 0, 2 ];
 
-  cancelMap.keys    = [ ALLEGRO_KEY_ESCAPE, ALLEGRO_KEY_K ];
+  cancelMap.keys    = [ KeyCode.escape, KeyCode.k ];
   cancelMap.buttons = [ 1 ];
 
   auto confirmHandler = new FakeHandler(ButtonHandler.Type.press, confirmMap);
