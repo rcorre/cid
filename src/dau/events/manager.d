@@ -43,9 +43,13 @@ class EventManager {
     }
   }
 
-  void setControlScheme(ControlScheme controls) {
-    //TODO: remap existing handlers?
-    _controls = controls;
+  @property {
+    auto controlScheme() { return _controls; }
+
+    void controlScheme(ControlScheme controls) {
+      //TODO: remap existing handlers?
+      _controls = controls;
+    }
   }
 
   auto after(double seconds, EventAction action) {
