@@ -92,12 +92,14 @@ class ButtonHandler : EventHandler {
 }
 
 class AxisHandler : EventHandler {
+  private enum Direction : ubyte { up, down, left, right };
+
   private {
     AxisMap    _map;
     AxisAction _action;
 
-    bool[nDirections] _dpad;
-    Vector2f          _joystick;
+    bool[4]  _dpad;
+    Vector2f _joystick;
   }
 
   this(AxisAction action, AxisMap map) {
@@ -108,17 +110,17 @@ class AxisHandler : EventHandler {
 
   override void handle(in ALLEGRO_EVENT ev) {
     with (Direction) {
-      if      (ev.isKeyPress  (_map.keys[down])) dpad(down, true);
-      else if (ev.isKeyRelease(_map.keys[down])) dpad(down, false);
+      if      (ev.isKeyPress  (_map.downKey)) dpad(down, true);
+      else if (ev.isKeyRelease(_map.downKey)) dpad(down, false);
 
-      else if (ev.isKeyPress  (_map.keys[up])) dpad(up, true);
-      else if (ev.isKeyRelease(_map.keys[up])) dpad(up, false);
+      else if (ev.isKeyPress  (_map.upKey)) dpad(up, true);
+      else if (ev.isKeyRelease(_map.upKey)) dpad(up, false);
 
-      else if (ev.isKeyPress  (_map.keys[left])) dpad(left, true);
-      else if (ev.isKeyRelease(_map.keys[left])) dpad(left, false);
+      else if (ev.isKeyPress  (_map.leftKey)) dpad(left, true);
+      else if (ev.isKeyRelease(_map.leftKey)) dpad(left, false);
 
-      else if (ev.isKeyPress  (_map.keys[right])) dpad(right, true);
-      else if (ev.isKeyRelease(_map.keys[right])) dpad(right, false);
+      else if (ev.isKeyPress  (_map.rightKey)) dpad(right, true);
+      else if (ev.isKeyRelease(_map.rightKey)) dpad(right, false);
 
       else if (ev.isAxisMotion(_map.xAxis)) joystickX(ev.joystick.pos);
       else if (ev.isAxisMotion(_map.yAxis)) joystickY(ev.joystick.pos);
@@ -303,6 +305,8 @@ unittest {
 
 // test axis handling
 unittest {
+  import dau.events.keycodes;
+
   enum {
     xAxis     = 0,
     yAxis     = 1,
@@ -313,10 +317,10 @@ unittest {
 
   AxisMap testAxis;
 
-  testAxis.keys[Direction.up]    = ALLEGRO_KEY_W;
-  testAxis.keys[Direction.down]  = ALLEGRO_KEY_S;
-  testAxis.keys[Direction.left]  = ALLEGRO_KEY_A;
-  testAxis.keys[Direction.right] = ALLEGRO_KEY_D;
+  testAxis.upKey    = KeyCode.w;
+  testAxis.downKey  = KeyCode.s;
+  testAxis.leftKey  = KeyCode.a;
+  testAxis.rightKey = KeyCode.d;
 
   testAxis.xAxis.stick = 1;
   testAxis.xAxis.axis  = 0;

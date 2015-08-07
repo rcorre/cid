@@ -10,8 +10,6 @@ import dau.events.keycodes;
 import jsonizer;
 
 package {
-  enum Direction : uint { up, down, left, right }
-  enum nDirections = EnumMembers!Direction.length;
 }
 
 struct ControlScheme {
@@ -48,15 +46,20 @@ struct AxisMap {
     }
   }
 
-  SubAxis          xAxis;
-  SubAxis          yAxis;
-  int[nDirections] keys;
+  SubAxis xAxis;
+  SubAxis yAxis;
+
+  KeyCode upKey;
+  KeyCode downKey;
+  KeyCode leftKey;
+  KeyCode rightKey;
 
   @jsonize
   this(string[string] keys, SubAxis[string] axes) {
-    foreach(direction, name ; keys) {
-      this.keys[direction.to!Direction] = name.to!KeyCode;
-    }
+    this.upKey    = keys["up"   ].to!KeyCode;
+    this.downKey  = keys["down" ].to!KeyCode;
+    this.leftKey  = keys["left" ].to!KeyCode;
+    this.rightKey = keys["right"].to!KeyCode;
 
     this.xAxis = axes["x"];
     this.yAxis = axes["y"];
@@ -87,8 +90,8 @@ unittest {
           "right": "d"
         },
         "axes": {
-          "x": { "stick": 0, "axis": 0 },
-          "y": { "stick": 0, "axis": 1 }
+          "x": { "stick": 1, "axis": 0 },
+          "y": { "stick": 2, "axis": 3 }
         }
       }
     }
@@ -105,4 +108,14 @@ unittest {
     [ ALLEGRO_KEY_K, ALLEGRO_KEY_ESCAPE ]));
 
   assert(controls.buttons["cancel"].buttons[].equal([ 3, 4]));
+
+  assert(controls.axes["move"].upKey    == ALLEGRO_KEY_W);
+  assert(controls.axes["move"].downKey  == ALLEGRO_KEY_S);
+  assert(controls.axes["move"].leftKey  == ALLEGRO_KEY_A);
+  assert(controls.axes["move"].rightKey == ALLEGRO_KEY_D);
+
+  assert(controls.axes["move"].xAxis.stick == 1);
+  assert(controls.axes["move"].yAxis.stick == 2);
+  assert(controls.axes["move"].xAxis.axis  == 0);
+  assert(controls.axes["move"].yAxis.axis  == 3);
 }
