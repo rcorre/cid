@@ -7,20 +7,22 @@ import std.container;
 
 /// list that automatically and efficiently removes entries for which cond(entry) is true
 class DropList(T, alias cond) if (is(typeof(cond(T.init)) == bool)) {
-  void insert(T val) {
+  void insertFront(T val) {
     head = new Node(val, head);
     if (head.next !is null) {
       head.next.prev = head;
     }
   }
 
-  void insert(Stuff)(Stuff stuff)
+  void insertFront(Stuff)(Stuff stuff)
     if (isInputRange!Stuff && isImplicitlyConvertible!(ElementType!Stuff, T))
   {
     foreach(item ; stuff) {
       insert(item);
     }
   }
+
+  alias insert = insertFront;
 
   bool empty() {
     // creating a slice will discard inactive elements,
