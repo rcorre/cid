@@ -2,7 +2,7 @@ module dau.events.handlers;
 
 import std.conv      : to;
 import std.traits    : EnumMembers;
-import std.container : Array;
+import std.typecons  : Flag;
 import std.algorithm : any;
 import dau.allegro;
 import dau.geometry;
@@ -13,14 +13,22 @@ alias EventAction = void delegate();
 alias AxisAction = void delegate(Vector2f axisPos);
 alias KeyAction = void delegate(KeyCode key);
 
+alias ConsumeEvent = Flag!"ConsumeEvent";
+
 abstract class EventHandler {
   private bool _active = true;
+  const ConsumeEvent consume;
+
+  this(ConsumeEvent consume) { this.consume = consume; }
 
   @property bool active() { return _active; }
 
   void unregister() { _active = false; }
 
-  void handle(in ALLEGRO_EVENT ev);
+  bool handle(in ALLEGRO_EVENT ev);
+
+  // called after changing the control scheme
+  void updateControls(ControlScheme controls) { }
 }
 
 class TimerHandler : EventHandler {
@@ -32,6 +40,8 @@ class TimerHandler : EventHandler {
   }
 
   this(EventAction action, double secs, bool repeat, ALLEGRO_EVENT_QUEUE* queue) {
+    // the event is specific to this handler, never pass it along
+    super(ConsumeEvent.yes);
     _action = action;
     _repeat = repeat;
     _queue  = queue;
@@ -49,11 +59,14 @@ class TimerHandler : EventHandler {
     al_destroy_timer(_timer);
   }
 
-  override void handle(in ALLEGRO_EVENT ev) {
+  override bool handle(in ALLEGRO_EVENT ev) {
     if (ev.type == ALLEGRO_EVENT_TIMER && ev.timer.source == _timer) {
       _action();
       if (!_repeat) unregister();
+      return true;
     }
+
+    return false;
   }
 }
 
@@ -63,24 +76,33 @@ class ButtonHandler : EventHandler {
   private {
     EventAction _action;
     Type        _type;
-    Array!int   _keys;
-    Array!int   _buttons;
+    string      _name;
+    KeyCode[]   _keys;
+    int[]       _buttons;
   }
 
-  this(EventAction action, Type type, ButtonMap map) {
-    _action  = action;
-    _type    = type;
-    _keys    = map.keys;
-    _buttons = map.buttons;
+  this(EventAction action,
+       Type type,
+       ControlScheme controls,
+       string name,
+       ConsumeEvent consume)
+  {
+    super(consume);
+    _action = action;
+    _type   = type;
+    _name   = name;
+
+    updateControls(controls);
   }
 
-  override void handle(in ALLEGRO_EVENT ev) {
+  override bool handle(in ALLEGRO_EVENT ev) {
     final switch (_type) with (Type) {
       case press:
         if (_keys[].any!(x => ev.isKeyPress(x)) ||
             _buttons[].any!(x => ev.isButtonPress(x)))
         {
           _action();
+          return true;
         }
         break;
       case release:
@@ -88,9 +110,18 @@ class ButtonHandler : EventHandler {
             _buttons[].any!(x => ev.isButtonRelease(x)))
         {
           _action();
+          return true;
         }
         break;
     }
+
+    return false;
+  }
+
+  override void updateControls(ControlScheme controls) {
+    assert(_name in controls.buttons, "unknown button name " ~ _name);
+    _keys = controls.buttons[_name].keys;
+    _buttons = controls.buttons[_name].buttons;
   }
 }
 
@@ -100,18 +131,29 @@ class AxisHandler : EventHandler {
   private {
     AxisMap    _map;
     AxisAction _action;
+    string     _name;
 
     bool[4]  _dpad;
     Vector2f _joystick;
   }
 
-  this(AxisAction action, AxisMap map) {
-    _map      = map;
+  this(AxisAction action,
+      ControlScheme controls,
+      string name,
+      ConsumeEvent consume)
+  {
+    super(consume);
+
     _action   = action;
+    _name     = name;
     _joystick = Vector2f.zero;
+
+    updateControls(controls);
   }
 
-  override void handle(in ALLEGRO_EVENT ev) {
+  override bool handle(in ALLEGRO_EVENT ev) {
+    bool handled = true;
+
     with (Direction) {
       if      (ev.isKeyPress  (_map.downKey)) dpad(down, true);
       else if (ev.isKeyRelease(_map.downKey)) dpad(down, false);
@@ -127,7 +169,16 @@ class AxisHandler : EventHandler {
 
       else if (ev.isAxisMotion(_map.xAxis)) joystickX(ev.joystick.pos);
       else if (ev.isAxisMotion(_map.yAxis)) joystickY(ev.joystick.pos);
+
+      else handled = false;
     }
+
+    return handled;
+  }
+
+  override void updateControls(ControlScheme controls) {
+    assert(_name in controls.axes, "unknown axis name " ~ _name);
+    _map = controls.axes[_name];
   }
 
   private:
@@ -166,18 +217,24 @@ class AnyKeyHandler : EventHandler {
     Type      _type;
   }
 
-  this(KeyAction action, Type type) {
+  this(KeyAction action, Type type, ConsumeEvent consume) {
+    super(consume);
+
     _action  = action;
     _type    = type;
   }
 
-  override void handle(in ALLEGRO_EVENT ev) {
+  override bool handle(in ALLEGRO_EVENT ev) {
     if (_type == Type.press && ev.type == ALLEGRO_EVENT_KEY_DOWN) {
       _action(ev.keyboard.keycode.to!KeyCode);
+      return true;
     }
     else if (_type == Type.release && ev.type == ALLEGRO_EVENT_KEY_UP) {
       _action(ev.keyboard.keycode.to!KeyCode);
+      return true;
     }
+
+    return false;
   }
 }
 
@@ -247,14 +304,14 @@ unittest {
 
     // handle the event, then return and reset the handled flag
     bool check(in ALLEGRO_EVENT ev) {
-      super.handle(ev);
-      auto res = handled;
+      auto res = super.handle(ev);
+      assert(res == handled);
       handled = false;
       return res;
     }
 
-    this(Type type, ButtonMap map) {
-      super({ handled = true; }, type, map);
+    this(Type type, ControlScheme controls, string name) {
+      super({ handled = true; }, type, controls, name, ConsumeEvent.no);
     }
   }
 
@@ -266,8 +323,12 @@ unittest {
   cancelMap.keys    = [ KeyCode.escape, KeyCode.k ];
   cancelMap.buttons = [ 1 ];
 
-  auto confirmHandler = new FakeHandler(ButtonHandler.Type.press, confirmMap);
-  auto cancelHandler  = new FakeHandler(ButtonHandler.Type.release, cancelMap);
+  ControlScheme controls;
+  controls.buttons["confirm"] = confirmMap;
+  controls.buttons["cancel"]  = cancelMap;
+
+  auto confirmHandler = new FakeHandler(ButtonHandler.Type.press  , controls, "confirm");
+  auto cancelHandler  = new FakeHandler(ButtonHandler.Type.release, controls, "cancel");
 
   auto buttonDown(int button) {
     ALLEGRO_EVENT ev;
@@ -343,18 +404,22 @@ unittest {
     badAxis   = 2,
   }
 
-  AxisMap testAxis;
+  AxisMap axis;
 
-  testAxis.upKey    = KeyCode.w;
-  testAxis.downKey  = KeyCode.s;
-  testAxis.leftKey  = KeyCode.a;
-  testAxis.rightKey = KeyCode.d;
+  axis.upKey    = KeyCode.w;
+  axis.downKey  = KeyCode.s;
+  axis.leftKey  = KeyCode.a;
+  axis.rightKey = KeyCode.d;
 
-  testAxis.xAxis.stick = 1;
-  testAxis.xAxis.axis  = 0;
+  axis.xAxis.stick = 1;
+  axis.xAxis.axis  = 0;
 
-  testAxis.yAxis.stick = 1;
-  testAxis.yAxis.axis  = 1;
+  axis.yAxis.stick = 1;
+  axis.yAxis.axis  = 1;
+
+  ControlScheme controls;
+
+  controls.axes["move"] = axis;
 
   Vector2f axisPos = Vector2f.zero;
 
@@ -364,7 +429,10 @@ unittest {
     return ok;
   }
 
-  auto moveHandler = new AxisHandler((pos) { axisPos = pos; }, testAxis);
+  auto moveHandler = new AxisHandler((pos) { axisPos = pos; },
+      controls,
+      "move",
+      ConsumeEvent.no);
 
   auto keyDown(int key) {
     ALLEGRO_EVENT ev;
@@ -390,54 +458,54 @@ unittest {
   }
 
   // up
-  moveHandler.handle(keyDown(ALLEGRO_KEY_W));
+  assert(moveHandler.handle(keyDown(ALLEGRO_KEY_W)));
   assert(check(Vector2f(0, -1)));
 
   // up+right
-  moveHandler.handle(keyDown(ALLEGRO_KEY_D));
+  assert(moveHandler.handle(keyDown(ALLEGRO_KEY_D)));
   assert(check(Vector2f(1, -1)));
 
   // up+right+down (down+up should cancel)
-  moveHandler.handle(keyDown(ALLEGRO_KEY_S));
+  assert(moveHandler.handle(keyDown(ALLEGRO_KEY_S)));
   assert(check(Vector2f(1, 0)));
 
   // down+right (released up)
-  moveHandler.handle(keyUp(ALLEGRO_KEY_W));
+  assert(moveHandler.handle(keyUp(ALLEGRO_KEY_W)));
   assert(check(Vector2f(1, 1)));
 
   // down (released right)
-  moveHandler.handle(keyUp(ALLEGRO_KEY_D));
+  assert(moveHandler.handle(keyUp(ALLEGRO_KEY_D)));
   assert(check(Vector2f(0, 1)));
 
   // everything released
-  moveHandler.handle(keyUp(ALLEGRO_KEY_S));
+  assert(moveHandler.handle(keyUp(ALLEGRO_KEY_S)));
   assert(check(Vector2f.zero));
 
   // move the joystick x axis
-  moveHandler.handle(moveAxis(goodStick, xAxis, 0.5f));
+  assert(moveHandler.handle(moveAxis(goodStick, xAxis, 0.5f)));
   assert(check(Vector2f(0.5f, 0)));
 
   // move the joystick y axis
-  moveHandler.handle(moveAxis(goodStick, yAxis, 0.7f));
+  assert(moveHandler.handle(moveAxis(goodStick, yAxis, 0.7f)));
   assert(check(Vector2f(0.5f, 0.7f)));
 
   // move the joystick x axis in the other direction
-  moveHandler.handle(moveAxis(goodStick, xAxis, -0.2f));
+  assert(moveHandler.handle(moveAxis(goodStick, xAxis, -0.2f)));
   assert(check(Vector2f(-0.2f, 0.7f)));
 
   // move a different axis on the same stick (should have no effect)
-  moveHandler.handle(moveAxis(goodStick, badAxis, -0.9f));
+  assert(!moveHandler.handle(moveAxis(goodStick, badAxis, -0.9f)));
   assert(check(Vector2f.zero));
 
   // move a different stick (should have no effect)
-  moveHandler.handle(moveAxis(badStick, xAxis, -0.9f));
+  assert(!moveHandler.handle(moveAxis(badStick, xAxis, -0.9f)));
   assert(check(Vector2f.zero));
 
   // move the joystick y axis to zero
-  moveHandler.handle(moveAxis(goodStick, yAxis, 0.0f));
+  assert(moveHandler.handle(moveAxis(goodStick, yAxis, 0.0f)));
   assert(check(Vector2f(-0.2f, 0.0f)));
 
   // move the joystick x axis to zero
-  moveHandler.handle(moveAxis(goodStick, xAxis, 0.0f));
+  assert(moveHandler.handle(moveAxis(goodStick, xAxis, 0.0f)));
   assert(check(Vector2f(-0.0f, 0.0f)));
 }

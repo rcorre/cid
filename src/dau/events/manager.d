@@ -38,7 +38,9 @@ class EventManager {
       al_wait_for_event(_queue, &event);
 
       foreach(handler ; _handlers) {
-        handler.handle(event);
+        bool handled = handler.handle(event);
+
+        if (handled && handler.consume) break;
       }
     }
   }
@@ -47,8 +49,8 @@ class EventManager {
     auto controlScheme() { return _controls; }
 
     void controlScheme(ControlScheme controls) {
-      //TODO: remap existing handlers?
       _controls = controls;
+      refreshHandlers(controls);
     }
   }
 
@@ -74,44 +76,49 @@ class EventManager {
     return every(dur.total!"nsecs" / 1e9, action);
   }
 
-  auto onButtonDown(string name, EventAction action) {
-    return registerButtonHandler(name, ButtonHandler.Type.press, action);
-  }
-
-  auto onButtonUp(string name, EventAction action) {
-    return registerButtonHandler(name, ButtonHandler.Type.press, action);
-  }
-
-  auto onAnyKeyDown(KeyAction action) {
-    auto handler = new AnyKeyHandler(action, AnyKeyHandler.Type.press);
-    _handlers.insert(handler);
-    return handler;
-  }
-
-  auto onAnyKeyUp(KeyAction action) {
-    auto handler = new AnyKeyHandler(action, AnyKeyHandler.Type.release);
-    _handlers.insert(handler);
-    return handler;
-  }
-
-  private auto registerButtonHandler(string name,
-                                     ButtonHandler.Type type,
-                                     EventAction action)
+  auto onButtonDown(string name,
+                    EventAction action,
+                    ConsumeEvent consume = ConsumeEvent.no)
   {
-    assert(name in _controls.buttons, "unknown button name " ~ name);
-
-    auto map = _controls.buttons[name];
-    auto handler = new ButtonHandler(action, type, map);
-
+    auto handler = new ButtonHandler(action, ButtonHandler.Type.press,
+        _controls, name, consume);
     _handlers.insert(handler);
     return handler;
   }
 
-  auto onAxisMoved(string name, AxisAction action) {
-    assert(name in _controls.axes, "unknown axis name " ~ name);
-
-    auto handler = new AxisHandler(action, _controls.axes[name]);
+  auto onButtonUp(string name,
+                  EventAction action,
+                  ConsumeEvent consume = ConsumeEvent.no)
+  {
+    auto handler = new ButtonHandler(action, ButtonHandler.Type.release,
+        _controls, name, consume);
     _handlers.insert(handler);
     return handler;
+  }
+
+  auto onAnyKeyDown(KeyAction action, ConsumeEvent consume = ConsumeEvent.no) {
+    auto handler = new AnyKeyHandler(action, AnyKeyHandler.Type.press, consume);
+    _handlers.insert(handler);
+    return handler;
+  }
+
+  auto onAnyKeyUp(KeyAction action, ConsumeEvent consume = ConsumeEvent.no) {
+    auto handler = new AnyKeyHandler(action, AnyKeyHandler.Type.release, consume);
+    _handlers.insert(handler);
+    return handler;
+  }
+
+  auto onAxisMoved(string name,
+                   AxisAction action,
+                   ConsumeEvent consume = ConsumeEvent.yes)
+  {
+    auto handler = new AxisHandler(action, _controls, name, consume);
+    _handlers.insert(handler);
+    return handler;
+  }
+
+  // update handlers to listen to new controls after a control scheme change
+  private auto refreshHandlers(ControlScheme controls) {
+    foreach(h ; _handlers) h.updateControls(controls);
   }
 }
