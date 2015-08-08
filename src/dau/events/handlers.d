@@ -1,14 +1,17 @@
 module dau.events.handlers;
 
+import std.conv      : to;
 import std.traits    : EnumMembers;
 import std.container : Array;
 import std.algorithm : any;
 import dau.allegro;
 import dau.geometry;
 import dau.events.input;
+import dau.events.keycodes;
 
 alias EventAction = void delegate();
 alias AxisAction = void delegate(Vector2f axisPos);
+alias KeyAction = void delegate(KeyCode key);
 
 abstract class EventHandler {
   private bool _active = true;
@@ -152,6 +155,29 @@ class AxisHandler : EventHandler {
 
     // trigger the registered action
     _action(pos);
+  }
+}
+
+class AnyKeyHandler : EventHandler {
+  enum Type { press, release }
+
+  private {
+    KeyAction _action;
+    Type      _type;
+  }
+
+  this(KeyAction action, Type type) {
+    _action  = action;
+    _type    = type;
+  }
+
+  override void handle(in ALLEGRO_EVENT ev) {
+    if (_type == Type.press && ev.type == ALLEGRO_EVENT_KEY_DOWN) {
+      _action(ev.keyboard.keycode.to!KeyCode);
+    }
+    else if (_type == Type.release && ev.type == ALLEGRO_EVENT_KEY_UP) {
+      _action(ev.keyboard.keycode.to!KeyCode);
+    }
   }
 }
 

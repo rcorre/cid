@@ -9,9 +9,6 @@ import dau.allegro;
 import dau.events.keycodes;
 import jsonizer;
 
-package {
-}
-
 struct ControlScheme {
   mixin JsonizeMe;
 

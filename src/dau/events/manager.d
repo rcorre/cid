@@ -82,6 +82,18 @@ class EventManager {
     return registerButtonHandler(name, ButtonHandler.Type.press, action);
   }
 
+  auto onAnyKeyDown(KeyAction action) {
+    auto handler = new AnyKeyHandler(action, AnyKeyHandler.Type.press);
+    _handlers.insert(handler);
+    return handler;
+  }
+
+  auto onAnyKeyUp(KeyAction action) {
+    auto handler = new AnyKeyHandler(action, AnyKeyHandler.Type.release);
+    _handlers.insert(handler);
+    return handler;
+  }
+
   private auto registerButtonHandler(string name,
                                      ButtonHandler.Type type,
                                      EventAction action)
