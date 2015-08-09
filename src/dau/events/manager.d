@@ -108,11 +108,35 @@ class EventManager {
     return handler;
   }
 
+  auto onAnyButtonDown(ButtonAction action,
+                       ConsumeEvent consume = ConsumeEvent.no)
+  {
+    auto handler =
+      new AnyButtonHandler(action, AnyButtonHandler.Type.press, consume);
+    _handlers.insert(handler);
+    return handler;
+  }
+
+  auto onAnyButtonUp(ButtonAction action,
+                     ConsumeEvent consume = ConsumeEvent.no)
+  {
+    auto handler =
+      new AnyButtonHandler(action, AnyButtonHandler.Type.release, consume);
+    _handlers.insert(handler);
+    return handler;
+  }
+
   auto onAxisMoved(string name,
                    AxisAction action,
                    ConsumeEvent consume = ConsumeEvent.yes)
   {
     auto handler = new AxisHandler(action, _controls, name, consume);
+    _handlers.insert(handler);
+    return handler;
+  }
+
+  auto onAnyAxis(AnyAxisAction action, ConsumeEvent consume = ConsumeEvent.yes) {
+    auto handler = new AnyAxisHandler(action, consume);
     _handlers.insert(handler);
     return handler;
   }

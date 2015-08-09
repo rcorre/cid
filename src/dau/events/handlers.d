@@ -9,9 +9,11 @@ import dau.geometry;
 import dau.events.input;
 import dau.events.keycodes;
 
-alias EventAction = void delegate();
-alias AxisAction = void delegate(Vector2f axisPos);
-alias KeyAction = void delegate(KeyCode key);
+alias EventAction   = void delegate();
+alias AxisAction    = void delegate(Vector2f axisPos);
+alias AnyAxisAction = void delegate(int stick, int axis, float pos);
+alias KeyAction     = void delegate(KeyCode key);
+alias ButtonAction  = void delegate(int button);
 
 alias ConsumeEvent = Flag!"ConsumeEvent";
 
@@ -232,6 +234,53 @@ class AnyKeyHandler : EventHandler {
     else if (_type == Type.release && ev.type == ALLEGRO_EVENT_KEY_UP) {
       _action(ev.keyboard.keycode.to!KeyCode);
       return true;
+    }
+
+    return false;
+  }
+}
+
+class AnyButtonHandler : EventHandler {
+  enum Type { press, release }
+
+  private {
+    ButtonAction _action;
+    Type         _type;
+  }
+
+  this(ButtonAction action, Type type, ConsumeEvent consume) {
+    super(consume);
+
+    _action  = action;
+    _type    = type;
+  }
+
+  override bool handle(in ALLEGRO_EVENT ev) {
+    if (_type == Type.release && ev.type == ALLEGRO_EVENT_JOYSTICK_BUTTON_UP ||
+        _type == Type.press   && ev.type == ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN)
+    {
+      _action(ev.joystick.button);
+      return true;
+    }
+
+    return false;
+  }
+}
+
+class AnyAxisHandler : EventHandler {
+  private {
+    AnyAxisAction _action;
+    string        _name;
+  }
+
+  this(AnyAxisAction action, ConsumeEvent consume) {
+    super(consume);
+    _action = action;
+  }
+
+  override bool handle(in ALLEGRO_EVENT ev) {
+    if (ev.type == ALLEGRO_EVENT_JOYSTICK_AXIS) {
+      _action(ev.joystick.stick, ev.joystick.axis, ev.joystick.pos);
     }
 
     return false;
