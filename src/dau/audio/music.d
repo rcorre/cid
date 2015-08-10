@@ -1,6 +1,5 @@
-module dau.music;
+module dau.audio.music;
 
-import std.path, std.string;
 import dau.allegro;
 
 /*

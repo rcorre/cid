@@ -11,6 +11,7 @@ import std.file   : exists;
 import std.path   : buildNormalizedPath, setExtension;
 import std.format : format;
 import dau.allegro;
+import dau.audio;
 import dau.state;
 import dau.events;
 import dau.util.content;
@@ -51,6 +52,8 @@ class Game {
     auto bitmaps() { return _bitmaps; }
     /// Retrieve fonts.
     auto fonts() { return _fonts; }
+    /// The audio manager controls sound and music.
+    auto audio() { return _audio; }
   }
 
   /**
@@ -81,6 +84,7 @@ class Game {
   private:
   StateStack!Game _stateStack;
   EventManager    _events;
+  AudioManager    _audio;
   Renderer        _renderer;
   Display         _display;
   float           _deltaTime;
@@ -93,6 +97,7 @@ class Game {
 
   this(State!Game firstState, Settings settings) {
     _events   = new EventManager;
+    _audio    = new AudioManager;
     _renderer = new Renderer;
     _display  = Display(settings.display);
 
