@@ -11,15 +11,29 @@ class AudioManager {
     ALLEGRO_SAMPLE*[string] _samples;
   }
 
+  this() {
+    bool ok = al_install_audio();
+    assert(ok, "failed to install audio module");
+
+    ok = al_init_acodec_addon();
+    assert(ok, "failed to init audio codec addon");
+
+    ok = al_reserve_samples(10);
+    assert(ok, "failed to reserve audio samples");
+  }
+
   ~this() {
     unloadSamples();
   }
 
-  void loadSamples(string dir, string glob) {
+  void loadSamples(string dir, string glob = "*") {
     bool followSymlink = false;
     foreach(entry ; dir.dirEntries(glob, SpanMode.depth, followSymlink)) {
       auto path = entry.name;
-      auto name = path.chompPrefix(dir).stripExtension;
+      auto name = path    // the name consists of the path
+        .chompPrefix(dir) // minus the directory prefix
+        .chompPrefix("/") // minus the leading /
+        .stripExtension;  // minus the extension
 
       auto sample = al_load_sample(path.toStringz);
       assert(sample, "failed to load " ~ path);
@@ -34,9 +48,8 @@ class AudioManager {
   }
 
   auto getSample(string name) {
-    auto sample = name in _samples;
-    assert(sample, "no sample named" ~ name);
-    return SoundSample(*sample);
+    assert(name in _samples, "no sample named " ~ name);
+    return SoundSample(_samples[name]);
   }
 
   auto playSample(string name) {

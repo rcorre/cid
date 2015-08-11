@@ -10,12 +10,12 @@ enum SoundPlayMode {
 
 struct SoundSample {
   float         gain  = 1;
-  float         speed = 1;
   float         pan   = 0;
+  float         speed = 1;
   SoundPlayMode mode  = SoundPlayMode.once;
 
   this(ALLEGRO_SAMPLE* sample) {
-    _sample   = sample;
+    _sample = sample;
   }
 
   void play() {
