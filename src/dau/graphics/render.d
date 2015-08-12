@@ -48,9 +48,14 @@ class Renderer {
       _batch = batch;
     }
 
-    auto depth() {
-      return _batch.visit!((SpriteBatch b) => b.depth,
-                           (TextBatch   b) => b.depth);
+    auto depth() inout {
+      // This no longer works with DMD 2.068,
+      // But my approach here is hacky anyways.
+      //return _batch.visit!((SpriteBatch b) => b.depth,
+      //                     (TextBatch   b) => b.depth);
+      return (_batch.type == typeid(SpriteBatch)) ?
+        _batch.get!SpriteBatch.depth :
+        _batch.get!TextBatch.depth;
     }
 
     void flip(ALLEGRO_TRANSFORM origTrans) {
