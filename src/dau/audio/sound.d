@@ -2,7 +2,7 @@ module dau.audio.sound;
 
 import dau.allegro;
 
-enum SoundPlayMode {
+enum AudioPlayMode {
   once  = ALLEGRO_PLAYMODE.ALLEGRO_PLAYMODE_ONCE,
   loop  = ALLEGRO_PLAYMODE.ALLEGRO_PLAYMODE_LOOP,
   bidir = ALLEGRO_PLAYMODE.ALLEGRO_PLAYMODE_BIDIR
@@ -12,7 +12,7 @@ struct SoundSample {
   float         gain  = 1;
   float         pan   = 0;
   float         speed = 1;
-  SoundPlayMode mode  = SoundPlayMode.once;
+  AudioPlayMode mode  = AudioPlayMode.once;
 
   this(ALLEGRO_SAMPLE* sample) {
     _sample = sample;
