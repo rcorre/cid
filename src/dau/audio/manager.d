@@ -12,9 +12,11 @@ alias AudioVoice = ALLEGRO_VOICE*;
 
 class AudioManager {
   private {
-    ALLEGRO_SAMPLE*[string] _samples;
-    AudioVoice              _voice;
-    AudioMixer              _streamMixer;
+    AudioSample[string] _samples;
+    AudioVoice          _streamVoice; // the audio output device
+    AudioVoice          _soundVoice;  // the audio output device
+    AudioMixer          _streamMixer; // mixer for music
+    AudioMixer          _soundMixer;  // mixer for sound effects
   }
 
   this() {
@@ -24,11 +26,12 @@ class AudioManager {
     ok = al_init_acodec_addon();
     assert(ok, "failed to init audio codec addon");
 
-    ok = al_reserve_samples(10);
-    assert(ok, "failed to reserve audio samples");
-
     // TODO: use game settings to configure these options
-    _voice = al_create_voice(44100,
+    _soundVoice = al_create_voice(44100,
+        ALLEGRO_AUDIO_DEPTH.ALLEGRO_AUDIO_DEPTH_INT16,
+        ALLEGRO_CHANNEL_CONF.ALLEGRO_CHANNEL_CONF_2);
+
+    _streamVoice = al_create_voice(44100,
         ALLEGRO_AUDIO_DEPTH.ALLEGRO_AUDIO_DEPTH_INT16,
         ALLEGRO_CHANNEL_CONF.ALLEGRO_CHANNEL_CONF_2);
 
@@ -36,11 +39,20 @@ class AudioManager {
         ALLEGRO_AUDIO_DEPTH.ALLEGRO_AUDIO_DEPTH_FLOAT32,
         ALLEGRO_CHANNEL_CONF.ALLEGRO_CHANNEL_CONF_2);
 
-    assert(_voice, "failed to create audio voice");
-    assert(_streamMixer, "failed to create audio stream mixer");
+    _soundMixer = al_create_mixer(44100,
+        ALLEGRO_AUDIO_DEPTH.ALLEGRO_AUDIO_DEPTH_FLOAT32,
+        ALLEGRO_CHANNEL_CONF.ALLEGRO_CHANNEL_CONF_2);
 
-    ok = al_attach_mixer_to_voice(_streamMixer, _voice);
-    assert(ok, "failed to attach mixer to voice");
+    assert(_soundVoice,  "failed to create sound effect voice");
+    assert(_streamVoice, "failed to create audio stream voice");
+    assert(_streamMixer, "failed to create audio stream mixer");
+    assert(_soundMixer,  "failed to create sound effect mixer");
+
+    ok = al_attach_mixer_to_voice(_streamMixer, _streamVoice);
+    assert(ok, "failed to attach stream mixer to voice");
+
+    ok = al_attach_mixer_to_voice(_soundMixer, _soundVoice);
+    assert(ok, "failed to attach sound mixer to voice");
   }
 
   ~this() {
@@ -70,7 +82,9 @@ class AudioManager {
 
   auto getSample(string name) {
     assert(name in _samples, "no sample named " ~ name);
-    return SoundSample(_samples[name]);
+    auto sound = SampleInstance(_samples[name]);
+    al_attach_sample_instance_to_mixer(sound, _soundMixer);
+    return sound;
   }
 
   auto playSample(string name) {

@@ -1,6 +1,7 @@
 module dau.audio.sound;
 
 import dau.allegro;
+import std.typecons : RefCounted, RefCountedAutoInitialize;
 
 enum AudioPlayMode {
   once  = ALLEGRO_PLAYMODE.ALLEGRO_PLAYMODE_ONCE,
@@ -8,28 +9,39 @@ enum AudioPlayMode {
   bidir = ALLEGRO_PLAYMODE.ALLEGRO_PLAYMODE_BIDIR
 }
 
-struct SoundSample {
-  float         gain  = 1;
-  float         pan   = 0;
-  float         speed = 1;
-  AudioPlayMode mode  = AudioPlayMode.once;
+alias AudioSample = ALLEGRO_SAMPLE*;
+alias SampleInstance = RefCounted!(Payload, RefCountedAutoInitialize.no);
 
-  this(ALLEGRO_SAMPLE* sample) {
-    _sample = sample;
+private struct Payload {
+  ALLEGRO_SAMPLE_INSTANCE* _instance;
+  alias _instance this;
+
+  this(ALLEGRO_SAMPLE *sample) {
+    _instance = al_create_sample_instance(sample);
   }
 
+  ~this() { al_destroy_sample_instance(_instance); }
+
   void play() {
-    bool ok = al_play_sample(_sample, gain, pan, speed, mode, &_id);
-    assert(ok, "a sound sample failed to play");
+    bool ok = al_play_sample_instance(_instance);
+    assert(ok, "Failed to play sample instance");
   }
 
   void stop() {
-    al_stop_sample(&_id);
+    bool ok = al_stop_sample_instance(_instance);
+    assert(ok, "Failed to stop sample instance");
   }
 
-  private:
-  ALLEGRO_SAMPLE*   _sample;
-  ALLEGRO_SAMPLE_ID _id;
+  @property {
+    bool playing () { return al_get_sample_instance_playing (_instance); }
+    auto gain    () { return al_get_sample_instance_gain    (_instance); }
+    auto pan     () { return al_get_sample_instance_pan     (_instance); }
+    auto speed   () { return al_get_sample_instance_speed   (_instance); }
+
+    void gain    (float val) { al_set_sample_instance_gain    (_instance, val); }
+    void pan     (float val) { al_set_sample_instance_pan     (_instance, val); }
+    void speed   (float val) { al_set_sample_instance_speed   (_instance, val); }
+  }
 }
 
 /++ TODO: pre-create a sample that has 0-length audio?
