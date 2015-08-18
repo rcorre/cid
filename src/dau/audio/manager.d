@@ -5,10 +5,8 @@ import std.path   : stripExtension;
 import std.string : toStringz, chompPrefix;
 import dau.allegro;
 import dau.audio.sound;
-
-alias AudioStream = ALLEGRO_AUDIO_STREAM*;
-alias AudioMixer = ALLEGRO_MIXER*;
-alias AudioVoice = ALLEGRO_VOICE*;
+import dau.audio.stream;
+import dau.audio.common;
 
 class AudioManager {
   private {
@@ -112,28 +110,6 @@ class AudioManager {
     import std.string : toStringz;
     auto stream = al_load_audio_stream(path.toStringz, 4, 1024);
     al_attach_audio_stream_to_mixer(stream, _streamMixer);
-    return stream;
+    return AudioStream(stream);
   }
-}
-
-auto gain(AudioStream stream) {
-  return al_get_audio_stream_gain(stream);
-}
-
-void gain(AudioStream stream, float val) {
-  bool ok = al_set_audio_stream_gain(stream, val);
-  assert(ok, "failed to set audio stream gain");
-}
-
-auto playMode(AudioStream stream) {
-  return al_get_audio_stream_playmode(stream);
-}
-
-void playMode(AudioStream stream, AudioPlayMode mode) {
-  bool ok = al_set_audio_stream_playmode(stream, mode);
-  assert(ok, "failed to set audio stream playmode");
-}
-
-void unload(AudioStream stream) {
-  al_destroy_audio_stream(stream);
 }

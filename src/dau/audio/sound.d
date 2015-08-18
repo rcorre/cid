@@ -3,12 +3,6 @@ module dau.audio.sound;
 import dau.allegro;
 import std.typecons : RefCounted, RefCountedAutoInitialize;
 
-enum AudioPlayMode {
-  once  = ALLEGRO_PLAYMODE.ALLEGRO_PLAYMODE_ONCE,
-  loop  = ALLEGRO_PLAYMODE.ALLEGRO_PLAYMODE_LOOP,
-  bidir = ALLEGRO_PLAYMODE.ALLEGRO_PLAYMODE_BIDIR
-}
-
 alias AudioSample = ALLEGRO_SAMPLE*;
 alias SampleInstance = RefCounted!(Payload, RefCountedAutoInitialize.no);
 
@@ -38,9 +32,9 @@ private struct Payload {
     auto pan     () { return al_get_sample_instance_pan     (_instance); }
     auto speed   () { return al_get_sample_instance_speed   (_instance); }
 
-    void gain    (float val) { al_set_sample_instance_gain    (_instance, val); }
-    void pan     (float val) { al_set_sample_instance_pan     (_instance, val); }
-    void speed   (float val) { al_set_sample_instance_speed   (_instance, val); }
+    void gain  (float val) { al_set_sample_instance_gain  (_instance, val); }
+    void pan   (float val) { al_set_sample_instance_pan   (_instance, val); }
+    void speed (float val) { al_set_sample_instance_speed (_instance, val); }
   }
 }
 
