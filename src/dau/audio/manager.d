@@ -12,9 +12,16 @@ alias AudioVoice = ALLEGRO_VOICE*;
 
 class AudioManager {
   private {
+    // Mixer Organization:
+    // soundMixer  -
+    //               \
+    //                 -> masterMixer -> voice
+    //               /
+    // streamMixer -
+
     AudioSample[string] _samples;
-    AudioVoice          _streamVoice; // the audio output device
-    AudioVoice          _soundVoice;  // the audio output device
+    AudioVoice          _voice;       // the audio output device
+    AudioMixer          _masterMixer; // mixer connected directly to voice
     AudioMixer          _streamMixer; // mixer for music
     AudioMixer          _soundMixer;  // mixer for sound effects
   }
@@ -27,12 +34,12 @@ class AudioManager {
     assert(ok, "failed to init audio codec addon");
 
     // TODO: use game settings to configure these options
-    _soundVoice = al_create_voice(44100,
+    _voice = al_create_voice(44100,
         ALLEGRO_AUDIO_DEPTH.ALLEGRO_AUDIO_DEPTH_INT16,
         ALLEGRO_CHANNEL_CONF.ALLEGRO_CHANNEL_CONF_2);
 
-    _streamVoice = al_create_voice(44100,
-        ALLEGRO_AUDIO_DEPTH.ALLEGRO_AUDIO_DEPTH_INT16,
+    _masterMixer = al_create_mixer(44100,
+        ALLEGRO_AUDIO_DEPTH.ALLEGRO_AUDIO_DEPTH_FLOAT32,
         ALLEGRO_CHANNEL_CONF.ALLEGRO_CHANNEL_CONF_2);
 
     _streamMixer = al_create_mixer(44100,
@@ -43,19 +50,26 @@ class AudioManager {
         ALLEGRO_AUDIO_DEPTH.ALLEGRO_AUDIO_DEPTH_FLOAT32,
         ALLEGRO_CHANNEL_CONF.ALLEGRO_CHANNEL_CONF_2);
 
-    assert(_soundVoice,  "failed to create sound effect voice");
-    assert(_streamVoice, "failed to create audio stream voice");
+    assert(_voice,       "failed to create audio voice");
     assert(_streamMixer, "failed to create audio stream mixer");
     assert(_soundMixer,  "failed to create sound effect mixer");
+    assert(_masterMixer, "failed to create master audio mixer");
 
-    ok = al_attach_mixer_to_voice(_streamMixer, _streamVoice);
-    assert(ok, "failed to attach stream mixer to voice");
-
-    ok = al_attach_mixer_to_voice(_soundMixer, _soundVoice);
+    ok = al_attach_mixer_to_mixer(_soundMixer, _masterMixer);
     assert(ok, "failed to attach sound mixer to voice");
+
+    ok = al_attach_mixer_to_mixer(_streamMixer, _masterMixer);
+    assert(ok, "failed to attach sound mixer to voice");
+
+    ok = al_attach_mixer_to_voice(_masterMixer, _voice);
+    assert(ok, "failed to attach master audio mixer to voice");
   }
 
   ~this() {
+    al_destroy_mixer(_soundMixer);
+    al_destroy_mixer(_streamMixer);
+    al_destroy_mixer(_masterMixer);
+    al_destroy_voice(_voice);
     unloadSamples();
   }
 
