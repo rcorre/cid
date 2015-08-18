@@ -92,15 +92,15 @@ class AudioManager {
     _samples = null;
   }
 
-  auto getSample(string name) {
+  auto getSound(string name) {
     assert(name in _samples, "no sample named " ~ name);
-    auto sound = SampleInstance(_samples[name]);
+    auto sound = SoundEffect(_samples[name]);
     al_attach_sample_instance_to_mixer(sound, _soundMixer);
     return sound;
   }
 
-  auto playSample(string name) {
-    auto sample = getSample(name);
+  auto playSound(string name) {
+    auto sample = getSound(name);
     sample.play();
   }
 

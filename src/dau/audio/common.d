@@ -2,8 +2,9 @@ module dau.audio.common;
 
 import dau.allegro;
 
-alias AudioMixer = ALLEGRO_MIXER*;
-alias AudioVoice = ALLEGRO_VOICE*;
+alias AudioMixer  = ALLEGRO_MIXER*;
+alias AudioVoice  = ALLEGRO_VOICE*;
+alias AudioSample = ALLEGRO_SAMPLE*;
 
 enum AudioPlayMode {
   once  = ALLEGRO_PLAYMODE.ALLEGRO_PLAYMODE_ONCE,

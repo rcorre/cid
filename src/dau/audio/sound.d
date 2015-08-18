@@ -1,12 +1,12 @@
 module dau.audio.sound;
 
-import dau.allegro;
 import std.typecons : RefCounted, RefCountedAutoInitialize;
+import dau.allegro;
+import dau.audio.common;
 
-alias AudioSample = ALLEGRO_SAMPLE*;
-alias SampleInstance = RefCounted!(Payload, RefCountedAutoInitialize.no);
+alias SoundEffect = RefCounted!(SoundWrapper, RefCountedAutoInitialize.no);
 
-private struct Payload {
+private struct SoundWrapper {
   ALLEGRO_SAMPLE_INSTANCE* _instance;
   alias _instance this;
 
