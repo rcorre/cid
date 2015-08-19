@@ -1,17 +1,21 @@
 module dau.audio.sound;
 
-import std.typecons : RefCounted, RefCountedAutoInitialize;
+import std.container : Array;
+import std.typecons  : RefCounted, RefCountedAutoInitialize;
+import std.algorithm : find;
 import dau.allegro;
 import dau.audio.common;
 
-alias SoundEffect = RefCounted!(SoundWrapper, RefCountedAutoInitialize.no);
+alias SoundEffect = RefCounted!(SoundEffectPayload, RefCountedAutoInitialize.no);
+alias SoundBank   = RefCounted!(SoundBankPayload  , RefCountedAutoInitialize.no);
 
-private struct SoundWrapper {
-  ALLEGRO_SAMPLE_INSTANCE* _instance;
-  alias _instance this;
+private:
+struct SoundEffectPayload {
+  private AudioInstance _instance;
 
-  this(ALLEGRO_SAMPLE *sample) {
+  this(AudioSample sample, AudioMixer mixer) {
     _instance = al_create_sample_instance(sample);
+    al_attach_sample_instance_to_mixer(_instance, mixer);
   }
 
   ~this() { al_destroy_sample_instance(_instance); }
@@ -37,6 +41,48 @@ private struct SoundWrapper {
     void speed (float val) { al_set_sample_instance_speed (_instance, val); }
   }
 }
+
+struct SoundBankPayload {
+  private {
+    Array!AudioInstance _instances;
+    AudioSample         _sample;
+    AudioMixer          _mixer;
+    size_t              _limit;
+  }
+
+  this(AudioSample sample, AudioMixer mixer, size_t limit) {
+    _sample = sample;
+    _mixer  = mixer;
+    _limit  = limit;
+  }
+
+  ~this() {
+    foreach(instance ; _instances) al_destroy_sample_instance(instance);
+  }
+
+  void play() {
+    auto ready = _instances[].find!(x => !al_get_sample_instance_playing(x));
+
+    if (!ready.empty) {
+      // we found an instance to reuse
+      bool ok = al_play_sample_instance(ready.front);
+      assert(ok, "Failed to play a sample instance from a sound bank");
+    }
+    else if (_instances.length < _limit) {
+      // all instances are playing, but we have room for a new one
+      auto newInstance = al_create_sample_instance(_sample);
+
+      // stick it in the list and attach it to our sound mixer
+      _instances.insert(newInstance);
+      al_attach_sample_instance_to_mixer(newInstance, _mixer);
+
+      // now play the new instance
+      bool ok = al_play_sample_instance(newInstance);
+      assert(ok, "Failed to play a sample instance from a sound bank");
+    }
+  }
+}
+
 
 /++ TODO: pre-create a sample that has 0-length audio?
 auto nullAudio() {

@@ -94,9 +94,12 @@ class AudioManager {
 
   auto getSound(string name) {
     assert(name in _samples, "no sample named " ~ name);
-    auto sound = SoundEffect(_samples[name]);
-    al_attach_sample_instance_to_mixer(sound, _soundMixer);
-    return sound;
+    return SoundEffect(_samples[name], _soundMixer);
+  }
+
+  auto getSoundBank(string name, size_t sizeLimit = 10) {
+    assert(name in _samples, "no sample named " ~ name);
+    return SoundBank(_samples[name], _soundMixer, sizeLimit);
   }
 
   auto playSound(string name) {
