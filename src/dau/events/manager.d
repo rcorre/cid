@@ -65,6 +65,41 @@ class EventManager {
     return after(dur.total!"nsecs" / 1e9, action);
   }
 
+  /**
+   * Perform a series of timed actions.
+   *
+   * Entries are provided as (delay, action) pairs.
+   * Delays are additive, meaning that if the first action's delay is given
+   * as t1 and the second action's delay is given as t2, the second action
+   * occurs at time (t1 + t2) from now.
+   *
+   * Example:
+   * -----
+   * // the actions will be called at 2, 5, and 8 seconds from now, respectively
+   * game.events.sequence(2, &openTheDoor,
+   *                      3, &getOnTheFloor,
+   *                      3, &walkTheDinosaur);
+   *
+   * // the above is equivalent to
+   * game.events.after(2    , &openTheDoor);
+   * game.events.after(2+3  , &getOnTheFloor);
+   * game.events.after(2+3+3, &walkTheDinosaur);
+   * -----
+   */
+  void sequence(T ...)(T entries) if (is(T[0] : double ) &&
+                                      is(T[1] : EventAction))
+  {
+    // pop off a (delay, action) pair and create a timer for it
+    double seconds     = entries[0];
+    EventAction action = entries[1];
+    after(seconds, action);
+
+    static if (T.length > 2) {
+      // there are more pairs left -- Add the current delay to the next.
+      sequence(entries[2] + seconds, entries[3..$]);
+    }
+  }
+
   auto every(double seconds, EventAction action) {
     enum repeat = true;
     auto handler = new TimerHandler(action, seconds, repeat, _queue);
