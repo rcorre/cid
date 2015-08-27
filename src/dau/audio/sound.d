@@ -1,10 +1,12 @@
 module dau.audio.sound;
 
+import std.random    : uniform;
 import std.container : Array;
 import std.typecons  : RefCounted, RefCountedAutoInitialize;
 import std.algorithm : find;
 import dau.allegro;
 import dau.audio.common;
+import dau.util.randomized;
 
 alias SoundEffect = RefCounted!(SoundEffectPayload, RefCountedAutoInitialize.no);
 alias SoundBank   = RefCounted!(SoundBankPayload  , RefCountedAutoInitialize.no);
@@ -43,6 +45,15 @@ struct SoundEffectPayload {
 }
 
 struct SoundBankPayload {
+  /// When playing a sound, the gain is randomly selected from this interval.
+  Randomized!(float, "[]") gainFactor  = [1,1];
+
+  /// When playing a sound, the pan is randomly selected from this interval.
+  Randomized!(float, "[]") panFactor   = [0,0];
+
+  /// When playing a sound, the speed is randomly selected from this interval.
+  Randomized!(float, "[]") speedFactor = [1,1];
+
   private {
     Array!AudioInstance _instances;
     AudioSample         _sample;
@@ -65,6 +76,13 @@ struct SoundBankPayload {
 
     if (!ready.empty) {
       // we found an instance to reuse
+      auto instance = ready.front;
+
+      // apply some variance
+      al_set_sample_instance_gain  (instance, gainFactor.next);
+      al_set_sample_instance_pan   (instance, panFactor.next);
+      al_set_sample_instance_speed (instance, speedFactor.next);
+
       bool ok = al_play_sample_instance(ready.front);
       assert(ok, "Failed to play a sample instance from a sound bank");
     }

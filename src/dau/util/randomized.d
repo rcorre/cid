@@ -7,6 +7,7 @@
  * Randomized!int numParticles = [200, 800];
  *
  * ---
+ */
 module dau.util.randomized;
 
 import std.random : uniform;
