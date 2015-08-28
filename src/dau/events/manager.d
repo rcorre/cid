@@ -163,7 +163,7 @@ class EventManager {
 
   auto onAxisMoved(string name,
                    AxisAction action,
-                   ConsumeEvent consume = ConsumeEvent.yes)
+                   ConsumeEvent consume = ConsumeEvent.no)
   {
     auto handler = new AxisHandler(action, _controls, name, consume);
     _handlers.insert(handler);
