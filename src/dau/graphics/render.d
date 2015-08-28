@@ -37,12 +37,13 @@ class Renderer {
     _batches.clear();
   }
 
-  void draw(SpriteBatch batch) { _batches.insert(Batch(batch)); }
-  void draw(TextBatch batch)   { _batches.insert(Batch(batch)); }
+  void draw(SpriteBatch batch)    { _batches.insert(Batch(batch)); }
+  void draw(TextBatch batch)      { _batches.insert(Batch(batch)); }
+  void draw(PrimitiveBatch batch) { _batches.insert(Batch(batch)); }
 
   private:
   struct Batch {
-    Algebraic!(SpriteBatch, TextBatch) _batch;
+    Algebraic!(SpriteBatch, TextBatch, PrimitiveBatch) _batch;
 
     this(T)(T batch) {
       _batch = batch;
@@ -53,14 +54,17 @@ class Renderer {
       // But my approach here is hacky anyways.
       //return _batch.visit!((SpriteBatch b) => b.depth,
       //                     (TextBatch   b) => b.depth);
-      return (_batch.type == typeid(SpriteBatch)) ?
-        _batch.get!SpriteBatch.depth :
-        _batch.get!TextBatch.depth;
+      auto t = _batch.type;
+      if (t == typeid(SpriteBatch))    return _batch.get!SpriteBatch.depth;
+      if (t == typeid(TextBatch))      return _batch.get!TextBatch.depth;
+      if (t == typeid(PrimitiveBatch)) return _batch.get!PrimitiveBatch.depth;
+      assert(0);
     }
 
     void flip(ALLEGRO_TRANSFORM origTrans) {
-      _batch.visit!((SpriteBatch b) => b.flip(origTrans),
-                    (TextBatch   b) => b.flip(origTrans));
+      _batch.visit!((SpriteBatch    b) => b.flip(origTrans),
+                    (TextBatch      b) => b.flip(origTrans),
+                    (PrimitiveBatch b) => b.flip(origTrans));
     }
   }
 }
@@ -200,6 +204,74 @@ struct TextBatch {
       al_use_transform(&curTrans);
 
       font.draw(text.text, text.color);
+    }
+  }
+}
+
+struct RectPrimitive {
+  Rect2i   rect;
+  bool     centered;
+  bool     filled;
+  float    thickness = 1f;
+  Vector2f roundness = Vector2f.zero;
+  Color    color     = Color.white;
+}
+
+struct PrimitiveBatch {
+  int                 depth;
+  Array!RectPrimitive prims;
+
+  /**
+   * Create a batch for drawing graphics primitives at a given depth.
+   *
+   * Params:
+   *  depth = sprite layer; more positive means 'higher'
+   */
+  this(int depth) {
+    this.depth  = depth;
+  }
+
+  /**
+   * Insert a single primitive into the batch to be drawn this frame.
+   *
+   * Params:
+   *  prim = primitive to draw with this batch.
+   */
+  void opCatAssign(RectPrimitive prim) {
+    prims.insert(prim);
+  }
+
+  /**
+   * Insert a range of primitives into the batch to be drawn this frame.
+   *
+   * Params:
+   *  r = a range of primitives to draw with this batch.
+   */
+  void opCatAssign(R)(R r)
+    if (isInputRange!R && is(ElementType!R == RectPrimitive))
+  {
+    prims.insert(r);
+  }
+
+  private void flip(ALLEGRO_TRANSFORM origTrans) {
+    al_use_transform(&origTrans);
+
+    foreach(prim ; prims) {
+      if (prim.filled) {
+        al_draw_filled_rounded_rectangle(
+            prim.rect.x, prim.rect.y,           // x1, y1
+            prim.rect.right, prim.rect.bottom,  // x2, y2
+            prim.roundness.x, prim.roundness.y, // rx, ry
+            prim.color);                        // color
+      }
+      else {
+        al_draw_rounded_rectangle(
+            prim.rect.x, prim.rect.y,           // x1, y1
+            prim.rect.right, prim.rect.bottom,  // x2, y2
+            prim.roundness.x, prim.roundness.y, // rx, ry
+            prim.color,                         // color
+            prim.thickness);                    // thickness
+      }
     }
   }
 }
