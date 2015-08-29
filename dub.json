@@ -1,6 +1,6 @@
 {
-  "name": "dau",
-  "description": "DAllegro Utilities: A game development utility layer",
+  "name": "cid",
+  "description": "A DAllegro-based game engine",
   "copyright": "Copyright © 2014, rcorre",
   "license": "MIT",
   "authors": ["rcorre"],
