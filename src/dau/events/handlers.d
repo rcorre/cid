@@ -14,6 +14,7 @@ alias AxisAction    = void delegate(Vector2f axisPos);
 alias AnyAxisAction = void delegate(int stick, int axis, float pos);
 alias KeyAction     = void delegate(KeyCode key);
 alias ButtonAction  = void delegate(int button);
+alias CustomAction  = void delegate(in ALLEGRO_EVENT ev);
 
 alias ConsumeEvent = Flag!"ConsumeEvent";
 
@@ -33,6 +34,28 @@ abstract class EventHandler {
   void updateControls(ControlScheme controls) { }
 }
 
+// generic event handler
+class CustomHandler : EventHandler {
+  private {
+    CustomAction       _action;
+    ALLEGRO_EVENT_TYPE _type;
+  }
+
+  this(CustomAction action, ALLEGRO_EVENT_TYPE type, ConsumeEvent consume) {
+    super(consume);
+    _action = action;
+    _type  = type;
+  }
+
+  override bool handle(in ALLEGRO_EVENT ev) {
+    if (ev.type == _type) {
+      _action(ev);
+      return true;
+    }
+
+    return false;
+  }
+}
 class TimerHandler : EventHandler {
   private {
     EventAction          _action;

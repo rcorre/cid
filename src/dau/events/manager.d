@@ -176,6 +176,15 @@ class EventManager {
     return handler;
   }
 
+  auto onEvent(ALLEGRO_EVENT_TYPE type,
+               CustomAction action,
+               ConsumeEvent consume = ConsumeEvent.no)
+  {
+    auto handler = new CustomHandler(action, type, consume);
+    _handlers.insert(handler);
+    return handler;
+  }
+
   // update handlers to listen to new controls after a control scheme change
   private auto refreshHandlers(ControlScheme controls) {
     foreach(h ; _handlers) h.updateControls(controls);
