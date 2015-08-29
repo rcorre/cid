@@ -3,7 +3,7 @@ module dau.audio.sound;
 import std.random    : uniform;
 import std.container : Array;
 import std.typecons  : RefCounted, RefCountedAutoInitialize;
-import std.algorithm : find;
+import std.algorithm : any, find;
 import dau.allegro;
 import dau.audio.common;
 import dau.util.randomized;
@@ -71,6 +71,11 @@ struct SoundBankPayload {
     foreach(instance ; _instances) al_destroy_sample_instance(instance);
   }
 
+  /// True if any of the sample instances in this bank are playing.
+  @property bool playing() { 
+    return _instances[].any!(x => al_get_sample_instance_playing(x));
+  }
+
   void play() {
     auto ready = _instances[].find!(x => !al_get_sample_instance_playing(x));
 
@@ -100,7 +105,6 @@ struct SoundBankPayload {
     }
   }
 }
-
 
 /++ TODO: pre-create a sample that has 0-length audio?
 auto nullAudio() {
