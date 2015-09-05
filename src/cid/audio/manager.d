@@ -112,6 +112,7 @@ class AudioManager {
   auto loadStream(string path, size_t bufferCount = 4, uint samples = 1024) {
     import std.string : toStringz;
     auto stream = al_load_audio_stream(path.toStringz, 4, 1024);
+    assert(stream, "failed to stream audio from " ~ path);
     al_attach_audio_stream_to_mixer(stream, _streamMixer);
     return AudioStream(stream);
   }
