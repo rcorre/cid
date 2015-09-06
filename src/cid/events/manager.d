@@ -1,5 +1,6 @@
 module cid.events.manager;
 
+import std.range : chain, only;
 import core.time;
 import cid.allegro;
 import cid.util.droplist;
@@ -73,6 +74,11 @@ class EventManager {
    * as t1 and the second action's delay is given as t2, the second action
    * occurs at time (t1 + t2) from now.
    *
+   * Params:
+   * entries = a series of (delay, action) pairs
+   *
+   * Returns: a range of one TimerHandler for each (delay, action) pair
+   *
    * Example:
    * -----
    * // the actions will be called at 2, 5, and 8 seconds from now, respectively
@@ -86,17 +92,21 @@ class EventManager {
    * game.events.after(2+3+3, &walkTheDinosaur);
    * -----
    */
-  void sequence(T ...)(T entries) if (is(T[0] : double ) &&
+  auto sequence(T ...)(T entries) if (is(T[0] : double ) &&
                                       is(T[1] : EventAction))
   {
     // pop off a (delay, action) pair and create a timer for it
     double seconds     = entries[0];
     EventAction action = entries[1];
-    after(seconds, action);
+
+    auto timer = after(seconds, action);
 
     static if (T.length > 2) {
       // there are more pairs left -- Add the current delay to the next.
-      sequence(entries[2] + seconds, entries[3..$]);
+      return chain(only(timer), sequence(entries[2] + seconds, entries[3..$]));
+    }
+    else {
+      return only(timer);
     }
   }
 
