@@ -77,11 +77,14 @@ class TimerHandler : EventHandler {
     al_start_timer(_timer);
   }
 
+  ~this() {
+    al_destroy_timer(_timer);
+  }
+
   override void unregister() {
     super.unregister();
 
     al_unregister_event_source(_queue, al_get_timer_event_source(_timer));
-    al_destroy_timer(_timer);
   }
 
   override bool handle(in ALLEGRO_EVENT ev) {
