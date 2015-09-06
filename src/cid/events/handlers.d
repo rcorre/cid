@@ -96,6 +96,12 @@ class TimerHandler : EventHandler {
 
     return false;
   }
+
+  /// Pause a running timer. Does nothing if already paused.
+  void stop() { al_stop_timer(_timer); }
+
+  /// Resume a paused timer. Does nothing if already running.
+  void start() { al_start_timer(_timer); }
 }
 
 class ButtonHandler : EventHandler {
