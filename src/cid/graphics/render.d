@@ -27,13 +27,17 @@ class Renderer {
     ALLEGRO_TRANSFORM origTrans;
     al_copy_transform(&origTrans, al_get_current_transform());
 
-    al_hold_bitmap_drawing(true);
     foreach(batch ; _batches) {
-      batch.flip(origTrans);
-    }
-    al_hold_bitmap_drawing(false);
+      // improve performance for drawing the same bitmap multiple times
+      al_hold_bitmap_drawing(true);
 
-    al_use_transform(&origTrans); // restore old transform
+      batch.flip(origTrans);
+
+      // restore old transform and stop holding bitmap drawing
+      al_use_transform(&origTrans);
+      al_hold_bitmap_drawing(false);
+    }
+
     _batches.clear();
   }
 
@@ -254,8 +258,6 @@ struct PrimitiveBatch {
   }
 
   private void flip(ALLEGRO_TRANSFORM origTrans) {
-    al_use_transform(&origTrans);
-
     foreach(prim ; prims) {
       if (prim.filled) {
         al_draw_filled_rounded_rectangle(
