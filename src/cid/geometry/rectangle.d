@@ -54,28 +54,28 @@ struct Rect2(T : real) {
     }
 
     auto topLeft() { return Vector2!T(x, y); }
-    auto topLeft(Vector2!T val) {
+    auto topLeft(U)(Vector2!U val) if (is(typeof(U.init) : T)) {
       x = val.x;
       y = val.y;
       return topLeft;
     }
 
     auto topRight() { return Vector2!T(right, y); }
-    auto topRight(Vector2!T val) {
+    auto topRight(U)(Vector2!U val) if (is(typeof(U.init) : T)) {
       right = val.x;
       top = val.y;
       return topRight;
     }
 
     auto bottomLeft() { return Vector2!T(left, bottom); }
-    auto bottomLeft(Vector2!T val) {
+    auto bottomLeft(U)(Vector2!U val) if (is(typeof(U.init) : T)) {
       left = val.x;
       bottom = val.y;
       return bottomLeft;
     }
 
     auto bottomRight() { return Vector2!T(right, bottom); }
-    auto bottomRight(Vector2!T val) {
+    auto bottomRight(U)(Vector2!U val) if (is(typeof(U.init) : T)) {
       right  = val.x;
       bottom = val.y;
       return bottomRight;
@@ -179,4 +179,13 @@ unittest {
 unittest {
   assert("1,2,3,4".parseRect!int == Rect2i(1, 2, 3, 4));
   assert("-1.4,2.6, 1.8, 42.7".parseRect!float == Rect2f(-1.4, 2.6, 1.8, 42.7));
+}
+
+// assigning corners from different types
+unittest {
+  Rect2f r = Rect2f(1, 2, 3, 4);
+  assert(r.topLeft == Vector2f(1,2));
+
+  r.topLeft = Vector2i(3,4);
+  assert(r.topLeft == Vector2f(3,4));
 }
