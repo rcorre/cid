@@ -221,7 +221,7 @@ struct TextBatch {
 }
 
 struct RectPrimitive {
-  Rect2i   rect;
+  Rect2f   rect;
   bool     centered;
   bool     filled;
   float    thickness = 1f;
