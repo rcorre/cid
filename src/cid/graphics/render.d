@@ -9,7 +9,6 @@ import cid.allegro;
 import cid.geometry;
 import cid.graphics.font;
 import cid.graphics.color;
-import cid.graphics.camera;
 import cid.graphics.bitmap;
 
 class Renderer {
