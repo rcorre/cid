@@ -26,6 +26,9 @@ import jsonizer;
 
 /// Represents the game window and the drawing canvas (backbuffer)
 struct Display {
+  // can be passed any allegro function expecting ALLEGRO_DISPLAY*
+  alias display this;
+
   /// Graphics and display configuration options.
   struct Settings {
     mixin JsonizeMe;

@@ -40,12 +40,10 @@ class Game {
   @property {
     /// Stack of states that manages game flow.
     ref auto states() { return _stateStack; }
-    /// Access the game window and backbuffer.
-    auto display() { return _display; }
+    /// Manage graphical resources like the display, bitmaps, and fonts.
+    auto graphics() { return _graphics; }
     /// Access the event manager.
     auto events() { return _events; }
-    /// Render bitmaps to the screen.
-    auto renderer() { return _renderer; }
     /// Seconds elapsed between the current frame and the previous frame.
     auto deltaTime() { return _deltaTime; }
     /// Retrieve bitmaps.
@@ -85,8 +83,7 @@ class Game {
   StateStack!Game _stateStack;
   EventManager    _events;
   AudioManager    _audio;
-  Renderer        _renderer;
-  Display         _display;
+  GraphicsManager _graphics;
   float           _deltaTime;
   bool            _stopped;
   bool            _update;
@@ -98,8 +95,7 @@ class Game {
   this(State!Game firstState, Settings settings) {
     _events   = new EventManager;
     _audio    = new AudioManager;
-    _renderer = new Renderer;
-    _display  = Display(settings.display);
+    _graphics = new GraphicsManager(settings.display);
 
     _events.every(1.0 / settings.fps, { _update = true; });
     _stateStack.push(firstState);
@@ -118,9 +114,9 @@ class Game {
 
         _stateStack.run(this);
 
-        display.clear();
-        renderer.render();
-        display.flip();
+        graphics.display.clear();
+        graphics.render();
+        graphics.display.flip();
 
         _update = false;
       }
