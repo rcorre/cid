@@ -17,16 +17,6 @@ import cid.events;
 import cid.util.content;
 import cid.graphics;
 
-private enum {
-  contentDir = "content",
-
-  bitmapDir = "image",
-  fontDir   = "font",
-
-  bitmapExt = ".png",
-  fontExt   = ".ttf",
-}
-
 /// Main game class.
 class Game {
   /// Settings used to configure the game.
@@ -46,10 +36,6 @@ class Game {
     auto events() { return _events; }
     /// Seconds elapsed between the current frame and the previous frame.
     auto deltaTime() { return _deltaTime; }
-    /// Retrieve bitmaps.
-    auto bitmaps() { return _bitmaps; }
-    /// Retrieve fonts.
-    auto fonts() { return _fonts; }
     /// The audio manager controls sound and music.
     auto audio() { return _audio; }
   }
@@ -89,9 +75,6 @@ class Game {
   bool            _update;
 
   // content
-  ContentCache!bitmapLoader _bitmaps;
-  ContentCache!fontLoader   _fonts;
-
   this(State!Game firstState, Settings settings) {
     _events   = new EventManager;
     _audio    = new AudioManager;
@@ -122,24 +105,4 @@ class Game {
       }
     }
   }
-}
-
-package:
-// TODO: private visibility, customizeable path
-auto bitmapLoader(string key) {
-  auto path = contentDir
-    .buildNormalizedPath(bitmapDir, key)
-    .setExtension(bitmapExt);
-
-  assert(path.exists, "could not find %s".format(path));
-  return Bitmap.load(path);
-}
-
-auto fontLoader(string key, int size) {
-  auto path = contentDir
-    .buildNormalizedPath(fontDir, key)
-    .setExtension(fontExt);
-
-  assert(path.exists, "could not find %s".format(path));
-  return loadFont(path, size);
 }
