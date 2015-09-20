@@ -17,37 +17,37 @@ struct Rect2(T : real) {
     this.height = height;
   }
 
-  this(T[4] vals) {
+  this(U : T)(U[4] vals) {
     this(vals[0], vals[1], vals[2], vals[3]);
   }
 
-  this(Vector2!T topLeft, T width, T height) {
+  this(U : T)(Vector2!U topLeft, U width, U height) {
     this(topLeft.x, topLeft.y, width, height);
   }
 
-  this(Vector2!T topLeft, Vector2!T size) {
+  this(U : T)(Vector2!U topLeft, Vector2!U size) {
     this(topLeft.x, topLeft.y, size.x, size.y);
   }
 
-  static auto centeredAt(Vector2!T center, T width, T height) {
+  static auto centeredAt(U : T)(Vector2!U center, U width, U height) {
     return Rect2!T(center.x - width / 2, center.y - height / 2, width, height);
   }
 
   @property {
-    T top()      { return y; }
-    T top(T val) { return y = val; }
+    T top()             { return y; }
+    T top(U : T)(U val) { return y = val; }
 
-    T left()      { return x; }
-    T left(T val) { return x = val; }
+    T left()             { return x; }
+    T left(U : T)(U val) { return x = val; }
 
-    T bottom()      { return y + height; }
-    T bottom(T val) { return y = val - height; }
+    T bottom()             { return y + height; }
+    T bottom(U : T)(U val) { return y = val - height; }
 
-    T right()      { return x + width; }
-    T right(T val) { return x = val - width; }
+    T right()             { return x + width; }
+    T right(U : T)(U val) { return x = val - width; }
 
     auto center() { return Vector2!T(x + width / 2, y + height / 2); }
-    auto center(Vector2!T val) {
+    auto center(U : T)(Vector2!U val) {
       x = val.x - width / 2;
       y = val.y - height / 2;
       return center;
@@ -82,7 +82,7 @@ struct Rect2(T : real) {
     }
   }
 
-  void opAssign(T[4] vals) {
+  void opAssign(U : T)(U[4] vals) {
     this.x      = vals[0];
     this.y      = vals[1];
     this.width  = vals[2];
@@ -94,23 +94,23 @@ struct Rect2(T : real) {
     return U(cast(V) x, cast(V) y, cast(V) width, cast(V) height);
   }
 
-  bool contains(T px, T py) {
+  bool contains(U : T)(U px, U py) {
     return px >= x && px <= right && py >= y && py <= bottom;
   }
 
-  bool contains(Vector2!T point) {
+  bool contains(U : T)(Vector2!U point) {
     return point.x >= x && point.x <= right && point.y >= y && point.y <= bottom;
   }
 
-  bool contains(Rect2!T rect) {
+  bool contains(U : T)(Rect2!U rect) {
     return rect.x >= x && rect.right <= right && rect.y >= y && rect.bottom <= bottom;
   }
 
-  bool intersects(Rect2!T rect) {
+  bool intersects(U : T)(Rect2!U rect) {
     return !(rect.right < x || rect.x > right || rect.bottom < y || rect.y > bottom);
   }
 
-  void keepInside(Rect2!T bounds, int buffer = 0) {
+  void keepInside(U : T)(Rect2!U bounds, int buffer = 0) {
     bounds.x += buffer / 2;
     bounds.y += buffer / 2;
     bounds.width  -= buffer / 2;
@@ -181,11 +181,23 @@ unittest {
   assert("-1.4,2.6, 1.8, 42.7".parseRect!float == Rect2f(-1.4, 2.6, 1.8, 42.7));
 }
 
-// assigning corners from different types
+// assigning from different types
 unittest {
+  import std.math : approxEqual;
+
   Rect2f r = Rect2f(1, 2, 3, 4);
   assert(r.topLeft == Vector2f(1,2));
 
   r.topLeft = Vector2i(3,4);
   assert(r.topLeft == Vector2f(3,4));
+
+  r = [1,2,3,4];
+  assert(r.topLeft == Vector2f(1,2));
+  assert(r.bottomRight == Vector2f(4,6));
+
+  r.top = 5;
+  assert(r.top == 5f);
+
+  auto r2 = Rect2f.centeredAt(Vector2i(2,2), 4, 4);
+  assert(r2.topLeft == Vector2f.zero);
 }
