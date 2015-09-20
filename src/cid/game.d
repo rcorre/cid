@@ -17,16 +17,6 @@ import cid.events;
 import cid.util.content;
 import cid.graphics;
 
-private enum {
-  contentDir = "content",
-
-  bitmapDir = "image",
-  fontDir   = "font",
-
-  bitmapExt = ".png",
-  fontExt   = ".ttf",
-}
-
 /// Main game class.
 class Game {
   /// Settings used to configure the game.
@@ -40,18 +30,12 @@ class Game {
   @property {
     /// Stack of states that manages game flow.
     ref auto states() { return _stateStack; }
-    /// Access the game window and backbuffer.
-    auto display() { return _display; }
+    /// Manage graphical resources like the display, bitmaps, and fonts.
+    auto graphics() { return _graphics; }
     /// Access the event manager.
     auto events() { return _events; }
-    /// Render bitmaps to the screen.
-    auto renderer() { return _renderer; }
     /// Seconds elapsed between the current frame and the previous frame.
     auto deltaTime() { return _deltaTime; }
-    /// Retrieve bitmaps.
-    auto bitmaps() { return _bitmaps; }
-    /// Retrieve fonts.
-    auto fonts() { return _fonts; }
     /// The audio manager controls sound and music.
     auto audio() { return _audio; }
   }
@@ -85,21 +69,16 @@ class Game {
   StateStack!Game _stateStack;
   EventManager    _events;
   AudioManager    _audio;
-  Renderer        _renderer;
-  Display         _display;
+  GraphicsManager _graphics;
   float           _deltaTime;
   bool            _stopped;
   bool            _update;
 
   // content
-  ContentCache!bitmapLoader _bitmaps;
-  ContentCache!fontLoader   _fonts;
-
   this(State!Game firstState, Settings settings) {
     _events   = new EventManager;
     _audio    = new AudioManager;
-    _renderer = new Renderer;
-    _display  = Display(settings.display);
+    _graphics = new GraphicsManager(settings.display);
 
     _events.every(1.0 / settings.fps, { _update = true; });
     _stateStack.push(firstState);
@@ -118,32 +97,12 @@ class Game {
 
         _stateStack.run(this);
 
-        display.clear();
-        renderer.render();
-        display.flip();
+        graphics.display.clear();
+        graphics.render();
+        graphics.display.flip();
 
         _update = false;
       }
     }
   }
-}
-
-package:
-// TODO: private visibility, customizeable path
-auto bitmapLoader(string key) {
-  auto path = contentDir
-    .buildNormalizedPath(bitmapDir, key)
-    .setExtension(bitmapExt);
-
-  assert(path.exists, "could not find %s".format(path));
-  return Bitmap.load(path);
-}
-
-auto fontLoader(string key, int size) {
-  auto path = contentDir
-    .buildNormalizedPath(fontDir, key)
-    .setExtension(fontExt);
-
-  assert(path.exists, "could not find %s".format(path));
-  return loadFont(path, size);
 }
