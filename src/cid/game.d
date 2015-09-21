@@ -87,6 +87,7 @@ class Game {
   void run() {
     while(!_stopped) {
       _events.process();
+      _graphics.process();
 
       if (_update) {
         static float last_update_time = 0;
