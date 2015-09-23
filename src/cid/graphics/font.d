@@ -48,6 +48,10 @@ int widthOf(Font font, string text) {
     .ifThrown(0);                                    // return 0 if empty
 }
 
+Vector2i sizeOf(Font font, string text) {
+  return Vector2i(font.widthOf(text), font.heightOf(text));
+}
+
 /// draw text at the given vector position in the given color
 void draw(Font font, string text, Color color = Color.black) {
   auto topLeft = Vector2i.zero;
