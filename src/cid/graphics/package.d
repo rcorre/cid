@@ -47,8 +47,8 @@ class GraphicsManager {
     auto display()  { return _display; }
     auto renderer() { return _renderer; }
 
-    auto bitmaps() { return _bitmaps; }
-    auto fonts()   { return _fonts; }
+    auto ref bitmaps() { return _bitmaps; }
+    auto ref fonts()   { return _fonts; }
   }
 
   this(Display.Settings settings) {
