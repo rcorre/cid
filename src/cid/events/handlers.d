@@ -243,6 +243,92 @@ class AxisHandler : EventHandler {
   }
 }
 
+class AxisTapHandler : EventHandler {
+  private enum Direction : ubyte { up, down, left, right };
+
+  private {
+    AxisMap    _map;
+    AxisAction _action;
+    string     _name;
+
+    Vector2f _joystick = Vector2f.zero;
+
+    bool  _tap;       // whether the axis is in a 'tapped' position
+    float _innerBand = 0.3f; // point to cross to release a tap
+    float _outerBand = 0.6f; // point to cross to trigger a tap
+  }
+
+  this(AxisAction action,
+      ControlScheme controls,
+      string name,
+      ConsumeEvent consume)
+  {
+    super(consume);
+
+    _action = action;
+    _name   = name;
+
+    updateControls(controls);
+  }
+
+  override bool handle(in ALLEGRO_EVENT ev) {
+    bool handled = true;
+
+    with (Direction) {
+      if      (ev.isKeyPress  (_map.downKey)) dpad(down, true);
+      else if (ev.isKeyRelease(_map.downKey)) dpad(down, false);
+
+      else if (ev.isKeyPress  (_map.upKey)) dpad(up, true);
+      else if (ev.isKeyRelease(_map.upKey)) dpad(up, false);
+
+      else if (ev.isKeyPress  (_map.leftKey)) dpad(left, true);
+      else if (ev.isKeyRelease(_map.leftKey)) dpad(left, false);
+
+      else if (ev.isKeyPress  (_map.rightKey)) dpad(right, true);
+      else if (ev.isKeyRelease(_map.rightKey)) dpad(right, false);
+
+      else if (ev.isAxisMotion(_map.xAxis))
+        joystick(ev.joystick.pos, _joystick.y);
+      else if (ev.isAxisMotion(_map.yAxis))
+        joystick(_joystick.x, ev.joystick.pos);
+
+      else handled = false;
+    }
+
+    return handled;
+  }
+
+  override void updateControls(ControlScheme controls) {
+    assert(_name in controls.axes, "unknown axis name " ~ _name);
+    _map = controls.axes[_name];
+  }
+
+  private:
+  void joystick(float x, float y) {
+    _joystick = Vector2f(x, y);
+
+    if (_tap && _joystick.len < _innerBand) {
+      // moved from a 'tapped' position to a 'neutral' position
+      _tap = true;
+      _action(_joystick);
+    }
+    else if (!_tap && _joystick.len > _outerBand) {
+      // moved from a 'neutral' position to a 'tapped' position
+      _tap = true;
+      _action(_joystick);
+    }
+  }
+
+  void dpad(Direction direction, bool pressed) {
+    final switch (direction) with (Direction) {
+      case up:    _action(Vector2f( 0, -1)); break;
+      case down:  _action(Vector2f( 0,  1)); break;
+      case left:  _action(Vector2f(-1,  0)); break;
+      case right: _action(Vector2f( 1,  0)); break;
+    }
+  }
+}
+
 class AnyKeyHandler : EventHandler {
   enum Type { press, release }
 

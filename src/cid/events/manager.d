@@ -180,6 +180,15 @@ class EventManager {
     return handler;
   }
 
+  auto onAxisTapped(string name,
+                   AxisAction action,
+                   ConsumeEvent consume = ConsumeEvent.no)
+  {
+    auto handler = new AxisTapHandler(action, _controls, name, consume);
+    _handlers.insert(handler);
+    return handler;
+  }
+
   auto onAnyAxis(AnyAxisAction action, ConsumeEvent consume = ConsumeEvent.yes) {
     auto handler = new AnyAxisHandler(action, consume);
     _handlers.insert(handler);
