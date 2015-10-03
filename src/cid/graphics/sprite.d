@@ -67,7 +67,6 @@ struct SpriteBatch {
 
   package void flip(ALLEGRO_TRANSFORM origTrans) {
     ALLEGRO_TRANSFORM curTrans;
-    al_copy_transform(&curTrans, &origTrans);
 
     foreach(sprite ; sprites) {
       // start with the original transform
