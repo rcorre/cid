@@ -67,8 +67,7 @@ struct TextBatch {
     scope(exit) al_hold_bitmap_drawing(false);
 
     foreach(text ; texts) {
-      // start with the original transform
-      al_copy_transform(&curTrans, &origTrans);
+      al_identity_transform(&curTrans);
 
       if (text.centered) {
         auto w = font.widthOf(text.text);
@@ -80,6 +79,9 @@ struct TextBatch {
 
       // compose with the transform for this individual text
       al_compose_transform(&curTrans, text.transform.transform);
+
+      // compose with the global transform
+      al_compose_transform(&curTrans, &origTrans);
 
       al_use_transform(&curTrans);
 

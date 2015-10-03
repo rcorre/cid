@@ -73,8 +73,7 @@ struct SpriteBatch {
     scope(exit) al_hold_bitmap_drawing(false);
 
     foreach(sprite ; sprites) {
-      // start with the original transform
-      al_copy_transform(&curTrans, &origTrans);
+      al_identity_transform(&curTrans);
 
       if (sprite.centered) {
         // translate by half the width and length to center the sprite
@@ -84,6 +83,9 @@ struct SpriteBatch {
 
       // compose with the transform for this individual sprite
       al_compose_transform(&curTrans, sprite.transform.transform);
+
+      // compose with the current global transform
+      al_compose_transform(&curTrans, &origTrans);
 
       al_use_transform(&curTrans);
 

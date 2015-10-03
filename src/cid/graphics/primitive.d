@@ -64,8 +64,7 @@ struct PrimitiveBatch {
     ALLEGRO_TRANSFORM trans;
 
     foreach(prim ; prims) {
-      // start with the original transform
-      al_copy_transform(&trans, &origTrans);
+      al_identity_transform(&trans);
 
       if (prim.centered) {
         // translate by half the width and length to center the rect
@@ -73,8 +72,13 @@ struct PrimitiveBatch {
             -prim.rect.width / 2, -prim.rect.height / 2);
       }
 
+      // apply rotation and translation to the primitive
       al_rotate_transform(&trans, prim.angle);
       al_translate_transform(&trans, prim.rect.x, prim.rect.y);
+
+      // apply the global transform
+      al_compose_transform(&trans, &origTrans);
+
       al_use_transform(&trans);
 
       if (prim.filled) {
