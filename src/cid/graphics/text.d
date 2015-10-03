@@ -61,7 +61,10 @@ struct TextBatch {
 
   package void flip(ALLEGRO_TRANSFORM origTrans) {
     ALLEGRO_TRANSFORM curTrans;
-    al_copy_transform(&curTrans, &origTrans);
+
+    // improve performance for drawing the same bitmap multiple times
+    al_hold_bitmap_drawing(true);
+    scope(exit) al_hold_bitmap_drawing(false);
 
     foreach(text ; texts) {
       // start with the original transform
