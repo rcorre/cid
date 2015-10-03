@@ -15,6 +15,7 @@ import cid.graphics.color;
 
 struct RectPrimitive {
   Rect2f   rect;
+  float    angle = 0f;
   bool     centered;
   bool     filled;
   float    thickness = 1f;
@@ -60,18 +61,33 @@ struct PrimitiveBatch {
   }
 
   package void flip(ALLEGRO_TRANSFORM origTrans) {
+    ALLEGRO_TRANSFORM trans;
+
     foreach(prim ; prims) {
+      // start with the original transform
+      al_copy_transform(&trans, &origTrans);
+
+      if (prim.centered) {
+        // translate by half the width and length to center the rect
+        al_translate_transform(&trans,
+            -prim.rect.width / 2, -prim.rect.height / 2);
+      }
+
+      al_rotate_transform(&trans, prim.angle);
+      al_translate_transform(&trans, prim.rect.x, prim.rect.y);
+      al_use_transform(&trans);
+
       if (prim.filled) {
         al_draw_filled_rounded_rectangle(
-            prim.rect.x, prim.rect.y,           // x1, y1
-            prim.rect.right, prim.rect.bottom,  // x2, y2
+            0, 0,                               // x1, y1
+            prim.rect.width, prim.rect.height,  // x2, y2
             prim.roundness.x, prim.roundness.y, // rx, ry
             prim.color);                        // color
       }
       else {
         al_draw_rounded_rectangle(
-            prim.rect.x, prim.rect.y,           // x1, y1
-            prim.rect.right, prim.rect.bottom,  // x2, y2
+            0, 0,                               // x1, y1
+            prim.rect.width, prim.rect.height,  // x2, y2
             prim.roundness.x, prim.roundness.y, // rx, ry
             prim.color,                         // color
             prim.thickness);                    // thickness

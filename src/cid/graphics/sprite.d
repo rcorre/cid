@@ -68,6 +68,10 @@ struct SpriteBatch {
   package void flip(ALLEGRO_TRANSFORM origTrans) {
     ALLEGRO_TRANSFORM curTrans;
 
+    // improve performance for drawing the same bitmap multiple times
+    al_hold_bitmap_drawing(true);
+    scope(exit) al_hold_bitmap_drawing(false);
+
     foreach(sprite ; sprites) {
       // start with the original transform
       al_copy_transform(&curTrans, &origTrans);

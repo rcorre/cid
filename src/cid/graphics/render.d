@@ -31,14 +31,8 @@ class Renderer {
     al_copy_transform(&origTrans, al_get_current_transform());
 
     foreach(batch ; _batches) {
-      // improve performance for drawing the same bitmap multiple times
-      al_hold_bitmap_drawing(true);
-
       batch.flip(origTrans);
-
-      // restore old transform and stop holding bitmap drawing
-      al_use_transform(&origTrans);
-      al_hold_bitmap_drawing(false);
+      al_use_transform(&origTrans); // restore old transform
     }
 
     _batches.clear();
