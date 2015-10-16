@@ -28,10 +28,11 @@ struct Sprite {
  * Groups draw calls for `Sprites` that share the same bitmap and depth.
  */
 struct SpriteBatch {
-  Bitmap       bitmap;
-  int          depth;
-  Array!Sprite sprites;
-  Blender      blender;
+  Bitmap          bitmap;
+  int             depth;
+  Array!Sprite    sprites;
+  Blender         blender;
+  Transform!float transform;
 
   /**
    * Create a batch for drawing sprites with the same bitmap and depth.
@@ -39,11 +40,14 @@ struct SpriteBatch {
    * Params:
    *  bitmap = bitmap to use as a sprite sheet
    *  depth = sprite layer; more positive means 'higher'
+   *  transform = camera transformation to apply to all sprites in batch
    */
-  this(Bitmap bitmap, int depth) {
-    this.bitmap = bitmap;
-    this.depth  = depth;
+  this(Bitmap bitmap, int depth, Transform!float transform = Transform!float.init) {
+    this.bitmap    = bitmap;
+    this.depth     = depth;
+    this.transform = transform;
   }
+
 
   /**
    * Insert a single sprite into the batch to be drawn this frame.

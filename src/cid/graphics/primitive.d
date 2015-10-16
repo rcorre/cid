@@ -27,15 +27,18 @@ struct PrimitiveBatch {
   int                 depth;
   Array!RectPrimitive prims;
   Blender             blender;
+  Transform!float     transform;
 
   /**
    * Create a batch for drawing graphics primitives at a given depth.
    *
    * Params:
    *  depth = sprite layer; more positive means 'higher'
+   *  transform = camera transformation to apply to all primitives in batch
    */
-  this(int depth) {
-    this.depth = depth;
+  this(int depth, Transform!float transform = Transform!float.init) {
+    this.depth     = depth;
+    this.transform = transform;
   }
 
   /**

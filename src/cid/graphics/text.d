@@ -22,10 +22,11 @@ struct Text {
 }
 
 struct TextBatch {
-  Font       font;
-  int        depth;
-  Array!Text texts;
-  Blender    blender;
+  Font            font;
+  int             depth;
+  Array!Text      texts;
+  Blender         blender;
+  Transform!float transform;
 
   /**
    * Create a batch for drawing text with the same font and depth.
@@ -33,10 +34,12 @@ struct TextBatch {
    * Params:
    *  bitmap = bitmap to use as a sprite sheet
    *  depth = sprite layer; more positive means 'higher'
+   *  transform = camera transformation to apply to all text in batch
    */
-  this(Font font, int depth) {
-    this.font = font;
-    this.depth  = depth;
+  this(Font font, int depth, Transform!float transform = Transform!float.init) {
+    this.font      = font;
+    this.depth     = depth;
+    this.transform = transform;
   }
 
   /**

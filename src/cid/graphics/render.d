@@ -31,7 +31,13 @@ class Renderer {
     al_copy_transform(&origTrans, al_get_current_transform());
 
     foreach(batch ; _batches) {
-      batch.flip(origTrans);
+      // compose the current transform with the transform for this entire batch
+      ALLEGRO_TRANSFORM batchTrans;
+      al_copy_transform(&batchTrans, &origTrans);
+      al_compose_transform(&batchTrans, batch.transform.transform);
+
+      batch.flip(batchTrans);
+
       al_use_transform(&origTrans); // restore old transform
     }
 
@@ -66,6 +72,12 @@ class Renderer {
       return _batch.visit!((SpriteBatch    b) => b.blender,
                            (TextBatch      b) => b.blender,
                            (PrimitiveBatch b) => b.blender);
+    }
+
+    auto transform() {
+      return _batch.visit!((SpriteBatch    b) => b.transform,
+                           (TextBatch      b) => b.transform,
+                           (PrimitiveBatch b) => b.transform);
     }
 
     void flip(ALLEGRO_TRANSFORM origTrans) {
