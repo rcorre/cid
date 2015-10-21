@@ -9,19 +9,20 @@ import cid.audio.stream;
 import cid.audio.common;
 
 class AudioManager {
-  private {
-    // Mixer Organization:
-    // soundMixer  -
-    //               \
-    //                 -> masterMixer -> voice
-    //               /
-    // streamMixer -
+  // Mixer Organization:
+  // soundMixer  -
+  //               \
+  //                 -> masterMixer -> voice
+  //               /
+  // streamMixer -
 
+  AudioMixer masterMixer; // mixer connected directly to voice
+  AudioMixer streamMixer; // mixer for music
+  AudioMixer soundMixer;  // mixer for sound effects
+
+  private {
     AudioSample[string] _samples;
     AudioVoice          _voice;       // the audio output device
-    AudioMixer          _masterMixer; // mixer connected directly to voice
-    AudioMixer          _streamMixer; // mixer for music
-    AudioMixer          _soundMixer;  // mixer for sound effects
   }
 
   this() {
@@ -36,37 +37,37 @@ class AudioManager {
         ALLEGRO_AUDIO_DEPTH.ALLEGRO_AUDIO_DEPTH_INT16,
         ALLEGRO_CHANNEL_CONF.ALLEGRO_CHANNEL_CONF_2);
 
-    _masterMixer = al_create_mixer(44100,
+    masterMixer = al_create_mixer(44100,
         ALLEGRO_AUDIO_DEPTH.ALLEGRO_AUDIO_DEPTH_FLOAT32,
         ALLEGRO_CHANNEL_CONF.ALLEGRO_CHANNEL_CONF_2);
 
-    _streamMixer = al_create_mixer(44100,
+    streamMixer = al_create_mixer(44100,
         ALLEGRO_AUDIO_DEPTH.ALLEGRO_AUDIO_DEPTH_FLOAT32,
         ALLEGRO_CHANNEL_CONF.ALLEGRO_CHANNEL_CONF_2);
 
-    _soundMixer = al_create_mixer(44100,
+    soundMixer = al_create_mixer(44100,
         ALLEGRO_AUDIO_DEPTH.ALLEGRO_AUDIO_DEPTH_FLOAT32,
         ALLEGRO_CHANNEL_CONF.ALLEGRO_CHANNEL_CONF_2);
 
     assert(_voice,       "failed to create audio voice");
-    assert(_streamMixer, "failed to create audio stream mixer");
-    assert(_soundMixer,  "failed to create sound effect mixer");
-    assert(_masterMixer, "failed to create master audio mixer");
+    assert(streamMixer, "failed to create audio stream mixer");
+    assert(soundMixer,  "failed to create sound effect mixer");
+    assert(masterMixer, "failed to create master audio mixer");
 
-    ok = al_attach_mixer_to_mixer(_soundMixer, _masterMixer);
+    ok = al_attach_mixer_to_mixer(soundMixer, masterMixer);
     assert(ok, "failed to attach sound mixer to voice");
 
-    ok = al_attach_mixer_to_mixer(_streamMixer, _masterMixer);
+    ok = al_attach_mixer_to_mixer(streamMixer, masterMixer);
     assert(ok, "failed to attach sound mixer to voice");
 
-    ok = al_attach_mixer_to_voice(_masterMixer, _voice);
+    ok = al_attach_mixer_to_voice(masterMixer, _voice);
     assert(ok, "failed to attach master audio mixer to voice");
   }
 
   ~this() {
-    al_destroy_mixer(_soundMixer);
-    al_destroy_mixer(_streamMixer);
-    al_destroy_mixer(_masterMixer);
+    al_destroy_mixer(soundMixer);
+    al_destroy_mixer(streamMixer);
+    al_destroy_mixer(masterMixer);
     al_destroy_voice(_voice);
     unloadSamples();
   }
@@ -94,12 +95,12 @@ class AudioManager {
 
   auto getSound(string name) {
     assert(name in _samples, "no sample named " ~ name);
-    return SoundEffect(_samples[name], _soundMixer);
+    return SoundEffect(_samples[name], soundMixer);
   }
 
   auto getSoundBank(string name, size_t sizeLimit = 10) {
     assert(name in _samples, "no sample named " ~ name);
-    return SoundBank(_samples[name], _soundMixer, sizeLimit);
+    return SoundBank(_samples[name], soundMixer, sizeLimit);
   }
 
   auto playSound(string name) {
@@ -113,7 +114,7 @@ class AudioManager {
     import std.string : toStringz;
     auto stream = al_load_audio_stream(path.toStringz, 4, 1024);
     assert(stream, "failed to stream audio from " ~ path);
-    al_attach_audio_stream_to_mixer(stream, _streamMixer);
+    al_attach_audio_stream_to_mixer(stream, streamMixer);
     return AudioStream(stream);
   }
 }
