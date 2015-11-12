@@ -21,8 +21,8 @@ struct ControlScheme {
 struct ButtonMap {
   mixin JsonizeMe;
 
-  KeyCode[] keys;
-  int[] buttons;
+  @jsonize KeyCode[] keys;
+  @jsonize int[] buttons;
 
   @jsonize
   this(string[] keys, int[] buttons) {
@@ -43,13 +43,13 @@ struct AxisMap {
     }
   }
 
-  SubAxis xAxis;
-  SubAxis yAxis;
+  @jsonize SubAxis xAxis;
+  @jsonize SubAxis yAxis;
 
-  KeyCode upKey;
-  KeyCode downKey;
-  KeyCode leftKey;
-  KeyCode rightKey;
+  @jsonize KeyCode upKey;
+  @jsonize KeyCode downKey;
+  @jsonize KeyCode leftKey;
+  @jsonize KeyCode rightKey;
 
   @jsonize
   this(string[string] keys, SubAxis[string] axes) {
@@ -63,6 +63,7 @@ struct AxisMap {
   }
 }
 
+// test loading controls
 unittest {
   import std.algorithm : equal;
 
@@ -115,4 +116,45 @@ unittest {
   assert(controls.axes["move"].yAxis.stick == 2);
   assert(controls.axes["move"].xAxis.axis  == 0);
   assert(controls.axes["move"].yAxis.axis  == 3);
+}
+
+// test loading controls
+unittest {
+  import std.algorithm : equal;
+
+  // setup and save
+  ControlScheme saveMe;
+
+  saveMe.buttons["confirm"].keys    = [ KeyCode.j, KeyCode.enter ];
+  saveMe.buttons["cancel"].keys     = [ KeyCode.k, KeyCode.escape ];
+  saveMe.buttons["confirm"].buttons = [ 1, 2 ];
+
+  saveMe.axes["move"].upKey    = KeyCode.w;
+  saveMe.axes["move"].downKey  = KeyCode.s;
+  saveMe.axes["move"].leftKey  = KeyCode.a;
+  saveMe.axes["move"].rightKey = KeyCode.d;
+
+  saveMe.axes["move"].xAxis.stick = 1;
+  saveMe.axes["move"].yAxis.stick = 2;
+  saveMe.axes["move"].xAxis.axis  = 0;
+  saveMe.axes["move"].yAxis.axis  = 3;
+
+  auto json = saveMe.toJSON;
+
+  // load and verify
+  auto loadMe = json.fromJSON!ControlScheme;
+
+  assert(loadMe.buttons["confirm"].keys    == [ KeyCode.j, KeyCode.enter  ]);
+  assert(loadMe.buttons["cancel"].keys     == [ KeyCode.k, KeyCode.escape ]);
+  assert(loadMe.buttons["confirm"].buttons == [ 1, 2 ]);
+
+  assert(loadMe.axes["move"].upKey    == KeyCode.w);
+  assert(loadMe.axes["move"].downKey  == KeyCode.s);
+  assert(loadMe.axes["move"].leftKey  == KeyCode.a);
+  assert(loadMe.axes["move"].rightKey == KeyCode.d);
+
+  assert(loadMe.axes["move"].xAxis.stick == 1);
+  assert(loadMe.axes["move"].yAxis.stick == 2);
+  assert(loadMe.axes["move"].xAxis.axis  == 0);
+  assert(loadMe.axes["move"].yAxis.axis  == 3);
 }
