@@ -43,23 +43,14 @@ struct AxisMap {
     }
   }
 
-  @jsonize SubAxis xAxis;
-  @jsonize SubAxis yAxis;
+  @jsonize {
+    SubAxis xAxis;
+    SubAxis yAxis;
 
-  @jsonize KeyCode upKey;
-  @jsonize KeyCode downKey;
-  @jsonize KeyCode leftKey;
-  @jsonize KeyCode rightKey;
-
-  @jsonize
-  this(string[string] keys, SubAxis[string] axes) {
-    this.upKey    = keys["up"   ].to!KeyCode;
-    this.downKey  = keys["down" ].to!KeyCode;
-    this.leftKey  = keys["left" ].to!KeyCode;
-    this.rightKey = keys["right"].to!KeyCode;
-
-    this.xAxis = axes["x"];
-    this.yAxis = axes["y"];
+    KeyCode upKey;
+    KeyCode downKey;
+    KeyCode leftKey;
+    KeyCode rightKey;
   }
 }
 
@@ -79,31 +70,27 @@ unittest {
           "buttons": [ 3, 4 ]
         }
     },
-    "axes": {
-      "move": {
-        "keys": {
-          "up"   : "w",
-          "down" : "s",
-          "left" : "a",
-          "right": "d"
-        },
-        "axes": {
-          "x": { "stick": 1, "axis": 0 },
-          "y": { "stick": 2, "axis": 3 }
+      "axes": {
+        "move": {
+          "upKey"   : "w",
+          "downKey" : "s",
+          "leftKey" : "a",
+          "rightKey": "d",
+          "xAxis": { "stick": 1, "axis": 0 },
+          "yAxis": { "stick": 2, "axis": 3 }
         }
       }
-    }
   }`;
 
   auto controls = json.fromJSONString!ControlScheme;
 
   assert(controls.buttons["confirm"].keys[].equal(
-    [ ALLEGRO_KEY_J, ALLEGRO_KEY_ENTER, ALLEGRO_KEY_SPACE ]));
+      [ ALLEGRO_KEY_J, ALLEGRO_KEY_ENTER, ALLEGRO_KEY_SPACE ]));
 
   assert(controls.buttons["confirm"].buttons[].equal([ 1, 2]));
 
   assert(controls.buttons["cancel"].keys[].equal(
-    [ ALLEGRO_KEY_K, ALLEGRO_KEY_ESCAPE ]));
+      [ ALLEGRO_KEY_K, ALLEGRO_KEY_ESCAPE ]));
 
   assert(controls.buttons["cancel"].buttons[].equal([ 3, 4]));
 
@@ -125,9 +112,14 @@ unittest {
   // setup and save
   ControlScheme saveMe;
 
+  saveMe.buttons["confirm"] = ButtonMap();
+  saveMe.buttons["cancel"]  = ButtonMap();
+
   saveMe.buttons["confirm"].keys    = [ KeyCode.j, KeyCode.enter ];
   saveMe.buttons["cancel"].keys     = [ KeyCode.k, KeyCode.escape ];
   saveMe.buttons["confirm"].buttons = [ 1, 2 ];
+
+  saveMe.axes["move"] = AxisMap();
 
   saveMe.axes["move"].upKey    = KeyCode.w;
   saveMe.axes["move"].downKey  = KeyCode.s;
