@@ -120,8 +120,6 @@ enum KeyCode : int {
   command    = ALLEGRO_KEY_COMMAND,
   unknown    = ALLEGRO_KEY_UNKNOWN,
 
-  modifiers = ALLEGRO_KEY_MODIFIERS,
-
   lshift     = ALLEGRO_KEY_LSHIFT,
   rshift     = ALLEGRO_KEY_RSHIFT,
   lctrl      = ALLEGRO_KEY_LCTRL,
