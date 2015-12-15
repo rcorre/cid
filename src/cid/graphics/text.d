@@ -37,6 +37,7 @@ struct TextBatch {
    *  transform = camera transformation to apply to all text in batch
    */
   this(Font font, int depth, Transform!float transform = Transform!float.init) {
+    assert(font !is null, "null font given to TextBatch. I see problems ahead...");
     this.font      = font;
     this.depth     = depth;
     this.transform = transform;
